@@ -15,15 +15,12 @@
     {% for svc in services %}
     <div class="glass rounded-3xl p-6" style="border-bottom:3px solid {{ svc.color|default:'#334155' }};">
       <div class="flex justify-between items-start mb-4">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center"
-          style="background:{{ svc.bg|default:'rgba(255,255,255,0.05)' }};">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:{{ svc.bg|default:'rgba(255,255,255,0.05)' }};">
           <span class="text-lg">{{ svc.icon }}</span>
         </div>
         <span class="flex items-center gap-2">
-          <span
-            class="status-dot {% if svc.status == 'online' %}online{% elif svc.status == 'warning' %}warning{% else %}offline{% endif %}"></span>
-          <span class="text-xs font-black"
-            style="color:{% if svc.status == 'online' %}#4ade80{% elif svc.status == 'warning' %}#fb923c{% else %}#64748b{% endif %};">
+          <span class="status-dot {% if svc.status == 'online' %}online{% elif svc.status == 'warning' %}warning{% else %}offline{% endif %}"></span>
+          <span class="text-xs font-black" style="color:{% if svc.status == 'online' %}#4ade80{% elif svc.status == 'warning' %}#fb923c{% else %}#64748b{% endif %};">
             {{ svc.status_label|default:svc.status|title }}
           </span>
         </span>
@@ -38,51 +35,39 @@
     <!-- Default service cards when no context -->
     <div class="glass rounded-3xl p-6" style="border-bottom:3px solid #22d3ee;">
       <div class="flex justify-between items-start mb-4">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(34,211,238,0.1);">🤖
-        </div>
-        <div class="flex items-center gap-2"><span class="status-dot online"></span><span class="text-xs font-black"
-            style="color:#4ade80;">Running</span></div>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(34,211,238,0.1);">🤖</div>
+        <div class="flex items-center gap-2"><span class="status-dot online"></span><span class="text-xs font-black" style="color:#4ade80;">Running</span></div>
       </div>
       <h4 class="text-base font-black text-white">FastAPI</h4>
       <p class="text-xs mt-1" style="color:#64748b;">AI Orchestrator (LangGraph)</p>
-      <div class="mt-4 pt-4 border-t" style="border-color:rgba(255,255,255,0.05);"><code class="text-xs"
-          style="color:#475569;">:8001/api</code></div>
+      <div class="mt-4 pt-4 border-t" style="border-color:rgba(255,255,255,0.05);"><code class="text-xs" style="color:#475569;">:8001/api</code></div>
     </div>
     <div class="glass rounded-3xl p-6" style="border-bottom:3px solid #3b82f6;">
       <div class="flex justify-between items-start mb-4">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(59,130,246,0.1);">🌐
-        </div>
-        <div class="flex items-center gap-2"><span class="status-dot online"></span><span class="text-xs font-black"
-            style="color:#4ade80;">Running</span></div>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(59,130,246,0.1);">🌐</div>
+        <div class="flex items-center gap-2"><span class="status-dot online"></span><span class="text-xs font-black" style="color:#4ade80;">Running</span></div>
       </div>
       <h4 class="text-base font-black text-white">Django</h4>
       <p class="text-xs mt-1" style="color:#64748b;">Web Framework + Auth</p>
-      <div class="mt-4 pt-4 border-t" style="border-color:rgba(255,255,255,0.05);"><code class="text-xs"
-          style="color:#475569;">:8000</code></div>
+      <div class="mt-4 pt-4 border-t" style="border-color:rgba(255,255,255,0.05);"><code class="text-xs" style="color:#475569;">:8000</code></div>
     </div>
     <div class="glass rounded-3xl p-6" style="border-bottom:3px solid #c084fc;">
       <div class="flex justify-between items-start mb-4">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(192,132,252,0.1);">⚙️
-        </div>
-        <div class="flex items-center gap-2"><span class="status-dot online"></span><span class="text-xs font-black"
-            style="color:#4ade80;">Running</span></div>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(192,132,252,0.1);">⚙️</div>
+        <div class="flex items-center gap-2"><span class="status-dot online"></span><span class="text-xs font-black" style="color:#4ade80;">Running</span></div>
       </div>
       <h4 class="text-base font-black text-white">Celery Worker</h4>
       <p class="text-xs mt-1" style="color:#64748b;">Background Tasks (ETL→S3)</p>
-      <div class="mt-4 pt-4 border-t" style="border-color:rgba(255,255,255,0.05);"><code class="text-xs"
-          style="color:#475569;">celery -A src.celery_workers</code></div>
+      <div class="mt-4 pt-4 border-t" style="border-color:rgba(255,255,255,0.05);"><code class="text-xs" style="color:#475569;">celery -A src.celery_workers</code></div>
     </div>
     <div class="glass rounded-3xl p-6" style="border-bottom:3px solid #fb923c;">
       <div class="flex justify-between items-start mb-4">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(251,146,60,0.1);">📨
-        </div>
-        <div class="flex items-center gap-2"><span class="status-dot warning"></span><span class="text-xs font-black"
-            style="color:#fb923c;">Optional</span></div>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(251,146,60,0.1);">📨</div>
+        <div class="flex items-center gap-2"><span class="status-dot warning"></span><span class="text-xs font-black" style="color:#fb923c;">Optional</span></div>
       </div>
       <h4 class="text-base font-black text-white">Redpanda</h4>
       <p class="text-xs mt-1" style="color:#64748b;">Message Broker (Kafka-compat.)</p>
-      <div class="mt-4 pt-4 border-t" style="border-color:rgba(255,255,255,0.05);"><code class="text-xs"
-          style="color:#475569;">:9092</code></div>
+      <div class="mt-4 pt-4 border-t" style="border-color:rgba(255,255,255,0.05);"><code class="text-xs" style="color:#475569;">:9092</code></div>
     </div>
     {% endfor %}
   </div>
@@ -90,8 +75,7 @@
 
 <!-- Data persistence row -->
 <div>
-  <h3 class="text-xs font-black uppercase tracking-widest mb-5" style="color:#fbbf24;">Data Persistence &amp; Remote
-    Storage</h3>
+  <h3 class="text-xs font-black uppercase tracking-widest mb-5" style="color:#fbbf24;">Data Persistence &amp; Remote Storage</h3>
   <div class="grid grid-cols-4 gap-5">
     <div class="glass rounded-2xl p-6" style="border:1px solid rgba(251,146,60,0.12);">
       <p class="text-2xl mb-3">🏠</p>
@@ -136,39 +120,20 @@
             <p class="text-xs" style="color:#64748b;">{{ tool.desc }}</p>
           </div>
         </div>
-        <a href="{{ tool.url }}" target="_blank" class="btn btn-ghost"
-          style="padding:6px 14px;border-radius:10px;font-size:0.65rem;">Open ↗</a>
+        <a href="{{ tool.url }}" target="_blank" class="btn btn-ghost" style="padding:6px 14px;border-radius:10px;font-size:0.65rem;">Open ↗</a>
       </div>
       {% empty %}
       <div class="flex justify-between items-center py-3 border-b" style="border-color:rgba(255,255,255,0.04);">
-        <div class="flex items-center gap-3"><span class="text-lg">📊</span>
-          <div>
-            <p class="text-sm font-bold text-white">Prometheus</p>
-            <p class="text-xs" style="color:#64748b;">Metrics scraping :9090</p>
-          </div>
-        </div>
-        <a href="http://localhost:9090" target="_blank" class="btn btn-ghost"
-          style="padding:6px 14px;border-radius:10px;font-size:0.65rem;">Open ↗</a>
+        <div class="flex items-center gap-3"><span class="text-lg">📊</span><div><p class="text-sm font-bold text-white">Prometheus</p><p class="text-xs" style="color:#64748b;">Metrics scraping :9090</p></div></div>
+        <a href="http://localhost:9090" target="_blank" class="btn btn-ghost" style="padding:6px 14px;border-radius:10px;font-size:0.65rem;">Open ↗</a>
       </div>
       <div class="flex justify-between items-center py-3 border-b" style="border-color:rgba(255,255,255,0.04);">
-        <div class="flex items-center gap-3"><span class="text-lg">📈</span>
-          <div>
-            <p class="text-sm font-bold text-white">Grafana</p>
-            <p class="text-xs" style="color:#64748b;">Dashboard :3000</p>
-          </div>
-        </div>
-        <a href="http://localhost:3000" target="_blank" class="btn btn-ghost"
-          style="padding:6px 14px;border-radius:10px;font-size:0.65rem;">Open ↗</a>
+        <div class="flex items-center gap-3"><span class="text-lg">📈</span><div><p class="text-sm font-bold text-white">Grafana</p><p class="text-xs" style="color:#64748b;">Dashboard :3000</p></div></div>
+        <a href="http://localhost:3000" target="_blank" class="btn btn-ghost" style="padding:6px 14px;border-radius:10px;font-size:0.65rem;">Open ↗</a>
       </div>
       <div class="flex justify-between items-center py-3">
-        <div class="flex items-center gap-3"><span class="text-lg">📝</span>
-          <div>
-            <p class="text-sm font-bold text-white">Loki / Logs</p>
-            <p class="text-xs" style="color:#64748b;">Log aggregation</p>
-          </div>
-        </div>
-        <a href="http://localhost:3000/explore" target="_blank" class="btn btn-ghost"
-          style="padding:6px 14px;border-radius:10px;font-size:0.65rem;">Open ↗</a>
+        <div class="flex items-center gap-3"><span class="text-lg">📝</span><div><p class="text-sm font-bold text-white">Loki / Logs</p><p class="text-xs" style="color:#64748b;">Log aggregation</p></div></div>
+        <a href="http://localhost:3000/explore" target="_blank" class="btn btn-ghost" style="padding:6px 14px;border-radius:10px;font-size:0.65rem;">Open ↗</a>
       </div>
       {% endfor %}
     </div>
@@ -179,12 +144,9 @@
     <h3 class="text-xs font-black uppercase tracking-widest mb-5" style="color:#22d3ee;">Self-Healing Event Log</h3>
     <div class="overflow-y-auto custom-scrollbar" style="height:240px;">
       {% for event in healing_events %}
-      <div class="mb-4 p-4 rounded-2xl"
-        style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);">
+      <div class="mb-4 p-4 rounded-2xl" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);">
         <div class="flex justify-between items-center mb-1">
-          <span class="text-xs font-black"
-            style="color:{% if event.type == 'retry' %}#fbbf24{% elif event.type == 'fallback' %}#fb923c{% else %}#22d3ee{% endif %};">{{
-            event.type|upper }}</span>
+          <span class="text-xs font-black" style="color:{% if event.type == 'retry' %}#fbbf24{% elif event.type == 'fallback' %}#fb923c{% else %}#22d3ee{% endif %};">{{ event.type|upper }}</span>
           <span class="text-xs" style="color:#475569;">{{ event.timestamp|timesince }} ago</span>
         </div>
         <p class="text-xs" style="color:#94a3b8;">{{ event.message }}</p>

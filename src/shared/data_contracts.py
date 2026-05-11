@@ -19,29 +19,23 @@ from pydantic import BaseModel, Field
 # =====================================================================
 class ShapFeature(BaseModel):
     """Single SHAP-explained feature for LightGBM XAI output."""
-    name: str = Field(..., description="Feature identifier, e.g. 'whitespace_entropy'")
-    display_name: str = Field("", description="Human-readable name, e.g. 'Whitespace Entropy'")
+    name: str = Field(..., description="Feature identifier e.g. 'whitespace_entropy'")
+    display_name: str = Field("", description="Human-readable label")
     value: float = Field(0.0, description="Raw extracted feature value")
     shap_value: float = Field(0.0, description="SHAP contribution to AI probability")
     direction: str = Field("AI", description="'AI' if shap > 0, 'HUMAN' if shap < 0")
-    human_baseline: float = Field(0.0, description="Mean value for human-written code")
-    ai_baseline: float = Field(0.0, description="Mean value for AI-generated code")
+    human_baseline: float = Field(0.0)
+    ai_baseline: float = Field(0.0)
     insight: str = Field("", description="Behavioral explanation in Vietnamese")
 
 
 class FingerprintResult(BaseModel):
     """LightGBM + SHAP fingerprint analysis result — human-readable XAI."""
-    lgbm_score: float = Field(0.5, ge=0.0, le=1.0, description="LightGBM P(AI)")
-    lgbm_prediction: str = Field("HUMAN WRITTEN", description="AI GENERATED | HUMAN WRITTEN")
-    executive_summary: str = Field("", description="Auto-generated NLG explanation")
-    top_features: list[ShapFeature] = Field(
-        default_factory=list,
-        description="Top 5 most influential features"
-    )
-    all_features: list[ShapFeature] = Field(
-        default_factory=list,
-        description="All 20 ranked features (including top_features)"
-    )
+    lgbm_score: float = Field(0.5, ge=0.0, le=1.0)
+    lgbm_prediction: str = Field("HUMAN WRITTEN")
+    executive_summary: str = Field("")
+    top_features: list[ShapFeature] = Field(default_factory=list)
+    all_features: list[ShapFeature] = Field(default_factory=list)
 
 
 # =====================================================================

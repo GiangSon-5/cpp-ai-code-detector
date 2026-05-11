@@ -1,5 +1,5 @@
 /* ==============================================================
-   AI Code Detector — main.js
+   CodeGuard AI — main.js
    Core UX: toast notifications, shared utilities
    ============================================================== */
 

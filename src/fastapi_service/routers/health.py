@@ -42,27 +42,16 @@ def _compute_p95(values: list[float]) -> float | None:
 
 
 def _get_gpu_stats() -> dict:
-    """Try to get real GPU VRAM from torch. Returns zeros if no GPU.
-
-    Uses memory_reserved (actual VRAM footprint held by PyTorch CUDA allocator)
-    instead of memory_allocated (only tensors, ignores fragmentation/overhead).
-    Total is capped at 4 GB — the configured limit for this local GPU server.
-    """
-    # Max VRAM budget for this local GPU server (4 GB mode)
-    VRAM_BUDGET_GB = 4.0
+    """Try to get real GPU VRAM from torch. Returns zeros if no GPU."""
     try:
         import torch
         if torch.cuda.is_available():
-            # memory_reserved = pages actually pinned in VRAM by the CUDA allocator
-            used  = torch.cuda.memory_reserved() / 1024**3
-            # Cap display total to configured budget, not full card capacity
-            total = VRAM_BUDGET_GB
-            # Clamp used to budget (can slightly exceed due to torch internals)
-            used  = min(round(used, 2), total)
+            used  = torch.cuda.memory_allocated() / 1024**3
+            total = torch.cuda.get_device_properties(0).total_memory / 1024**3
             pct   = used / total * 100 if total > 0 else 0
             return {
-                "gpu_vram_used_gb": used,
-                "gpu_vram_total_gb": total,
+                "gpu_vram_used_gb": round(used, 2),
+                "gpu_vram_total_gb": round(total, 2),
                 "gpu_vram_pct": round(pct, 1),
             }
     except Exception:

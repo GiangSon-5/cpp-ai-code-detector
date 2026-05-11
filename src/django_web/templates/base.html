@@ -1,13 +1,11 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}CodeGuard AI — C++ AI Detector{% endblock %}</title>
-  <meta name="description"
-    content="{% block description %}Enterprise system for detecting AI-generated C++ code using RoBERTa Ensemble + Qwen LLM{% endblock %}">
+  <meta name="description" content="{% block description %}Enterprise system for detecting AI-generated C++ code using RoBERTa Ensemble + Qwen LLM{% endblock %}">
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -30,28 +28,23 @@
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Fira+Code:wght@400;500&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 
   <!-- Design System -->
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
   {% block extra_css %}{% endblock %}
 </head>
-
-<body class="min-h-screen flex flex-col"
-  style="background-color:#0b0f1a;font-family:'Outfit',sans-serif;color:#e2e8f0;">
+<body class="min-h-screen flex flex-col" style="background-color:#0b0f1a;font-family:'Outfit',sans-serif;color:#e2e8f0;">
 
   <!-- ══ NAVIGATION HEADER ══════════════════════════════════════════ -->
   <header class="flex justify-between items-center px-8 py-5 border-b" style="border-color:rgba(255,255,255,0.05);">
 
     <!-- Logo -->
     <div class="flex items-center space-x-3">
-      <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
-        style="background:linear-gradient(135deg,#22d3ee,#3b82f6);box-shadow:0 0 20px rgba(34,211,238,0.25);">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style="background:linear-gradient(135deg,#22d3ee,#3b82f6);box-shadow:0 0 20px rgba(34,211,238,0.25);">
         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
         </svg>
       </div>
       <span class="text-xl font-black tracking-tight">CodeGuard <span style="color:#22d3ee;">AI</span></span>
@@ -60,24 +53,28 @@
     <!-- Nav Links -->
     {% if user.is_authenticated %}
     <nav class="flex space-x-10 text-xs font-black uppercase tracking-widest" style="color:#64748b;">
-      <a href="{% url 'submissions:submit' %}" class="pb-1 transition-colors hover:text-white
+      <a href="{% url 'submissions:submit' %}"
+         class="pb-1 transition-colors hover:text-white
                 {% if 'submit' in request.path or request.path == '/submit/' %}border-b-2{% endif %}"
-        style="{% if 'submit' in request.path %}color:#22d3ee;border-color:#22d3ee;{% endif %}">
+         style="{% if 'submit' in request.path %}color:#22d3ee;border-color:#22d3ee;{% endif %}">
         1. Analyze
       </a>
-      <a href="#" class="pb-1 transition-colors hover:text-white
+      <a href="#"
+         class="pb-1 transition-colors hover:text-white
                 {% if 'result' in request.path %}border-b-2{% endif %}"
-        style="{% if 'result' in request.path %}color:#22d3ee;border-color:#22d3ee;{% endif %}">
+         style="{% if 'result' in request.path %}color:#22d3ee;border-color:#22d3ee;{% endif %}">
         2. Deep Analysis
       </a>
-      <a href="{% url 'submissions:history' %}" class="pb-1 transition-colors hover:text-white
+      <a href="{% url 'submissions:history' %}"
+         class="pb-1 transition-colors hover:text-white
                 {% if 'history' in request.path %}border-b-2{% endif %}"
-        style="{% if 'history' in request.path %}color:#22d3ee;border-color:#22d3ee;{% endif %}">
+         style="{% if 'history' in request.path %}color:#22d3ee;border-color:#22d3ee;{% endif %}">
         3. History
       </a>
-      <a href="{% url 'accounts:profile' %}" class="pb-1 transition-colors hover:text-white
+      <a href="{% url 'accounts:profile' %}"
+         class="pb-1 transition-colors hover:text-white
                 {% if 'profile' in request.path %}border-b-2{% endif %}"
-        style="{% if 'profile' in request.path %}color:#22d3ee;border-color:#22d3ee;{% endif %}">
+         style="{% if 'profile' in request.path %}color:#22d3ee;border-color:#22d3ee;{% endif %}">
         Settings
       </a>
     </nav>
@@ -85,8 +82,7 @@
     <!-- User avatar + username -->
     <div class="flex items-center space-x-3">
       <span class="text-xs font-bold" style="color:#94a3b8;">{{ user.username|upper }}</span>
-      <div class="w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-black"
-        style="border-color:#334155;background:linear-gradient(135deg,#22d3ee22,#3b82f622);color:#22d3ee;">
+      <div class="w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-black" style="border-color:#334155;background:linear-gradient(135deg,#22d3ee22,#3b82f622);color:#22d3ee;">
         {{ user.username|slice:":1"|upper }}
       </div>
     </div>
@@ -95,9 +91,7 @@
     <!-- Guest nav -->
     <nav class="flex space-x-6 text-xs font-black uppercase tracking-widest" style="color:#64748b;">
       <a href="{% url 'accounts:login' %}" class="hover:text-white transition-colors">Login</a>
-      <a href="{% url 'accounts:register' %}"
-        class="px-5 py-2 rounded-xl font-black text-black transition-all hover:opacity-90"
-        style="background:#22d3ee;">Register</a>
+      <a href="{% url 'accounts:register' %}" class="px-5 py-2 rounded-xl font-black text-black transition-all hover:opacity-90" style="background:#22d3ee;">Register</a>
     </nav>
     <div></div>
     {% endif %}
@@ -116,7 +110,7 @@
   {% endif %}
 
   <!-- ══ MAIN CONTENT ═══════════════════════════════════════════════ -->
-  <main class="flex-1 px-8 py-10 {% block main_class %}{% endblock %}">
+  <main class="flex-1 {% block main_class %}{% endblock %}">
     {% block content %}{% endblock %}
   </main>
 
@@ -127,3 +121,4 @@
   <script src="{% static 'js/main.js' %}"></script>
   {% block extra_js %}{% endblock %}
 </body>
+</html>

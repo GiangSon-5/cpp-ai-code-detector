@@ -6,10 +6,9 @@
 <div class="w-full max-w-md animate-slide-up">
 
   <div class="text-center mb-10">
-    <div class="inline-flex w-16 h-16 rounded-2xl items-center justify-center mb-5 shadow-lg"
-      style="background:linear-gradient(135deg,#22d3ee,#3b82f6);box-shadow:0 0 30px rgba(34,211,238,0.25);">
+    <div class="inline-flex w-16 h-16 rounded-2xl items-center justify-center mb-5 shadow-lg" style="background:linear-gradient(135deg,#22d3ee,#3b82f6);box-shadow:0 0 30px rgba(34,211,238,0.25);">
       <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
       </svg>
     </div>
     <h1 class="text-3xl font-black text-white">Create account</h1>
@@ -29,42 +28,35 @@
 
       <!-- Username -->
       <div class="space-y-2">
-        <label for="id_username" class="block text-xs font-black uppercase tracking-widest"
-          style="color:#64748b;">Username</label>
+        <label for="id_username" class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Username</label>
         <input type="text" id="id_username" name="username" class="input-dark" placeholder="your_username"
-          value="{{ form.username.value|default:'' }}" autocomplete="username" autofocus>
+               value="{{ form.username.value|default:'' }}" autocomplete="username" autofocus>
         {% if form.username.errors %}<p class="text-xs" style="color:#f87171;">{{ form.username.errors.0 }}</p>{% endif %}
       </div>
 
       <!-- Email -->
       <div class="space-y-2">
-        <label for="id_email" class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Email
-          Address</label>
+        <label for="id_email" class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Email Address</label>
         <input type="email" id="id_email" name="email" class="input-dark" placeholder="you@ut.edu.vn"
-          value="{{ form.email.value|default:'' }}" autocomplete="email">
+               value="{{ form.email.value|default:'' }}" autocomplete="email">
         {% if form.email.errors %}<p class="text-xs" style="color:#f87171;">{{ form.email.errors.0 }}</p>{% endif %}
       </div>
 
       <!-- Password 1 -->
       <div class="space-y-2">
-        <label for="id_password1" class="block text-xs font-black uppercase tracking-widest"
-          style="color:#64748b;">Password</label>
-        <input type="password" id="id_password1" name="password1" class="input-dark" placeholder="min 8 characters"
-          autocomplete="new-password">
+        <label for="id_password1" class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Password</label>
+        <input type="password" id="id_password1" name="password1" class="input-dark" placeholder="min 8 characters" autocomplete="new-password">
         {% if form.password1.errors %}<p class="text-xs" style="color:#f87171;">{{ form.password1.errors.0 }}</p>{% endif %}
       </div>
 
       <!-- Password 2 -->
       <div class="space-y-2">
-        <label for="id_password2" class="block text-xs font-black uppercase tracking-widest"
-          style="color:#64748b;">Confirm Password</label>
-        <input type="password" id="id_password2" name="password2" class="input-dark" placeholder="••••••••"
-          autocomplete="new-password">
+        <label for="id_password2" class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Confirm Password</label>
+        <input type="password" id="id_password2" name="password2" class="input-dark" placeholder="••••••••" autocomplete="new-password">
         {% if form.password2.errors %}<p class="text-xs" style="color:#f87171;">{{ form.password2.errors.0 }}</p>{% endif %}
       </div>
 
-      <button type="submit" id="register-btn" class="btn btn-primary w-full mt-2"
-        style="border-radius:16px;padding:16px;">
+      <button type="submit" id="register-btn" class="btn btn-primary w-full mt-2" style="border-radius:16px;padding:16px;">
         Create Account
       </button>
     </form>
@@ -85,10 +77,10 @@
 
 {% block extra_js %}
 <script>
-  document.getElementById('register-form').addEventListener('submit', function () {
-    const btn = document.getElementById('register-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-sm"></span> Creating...';
-  });
+document.getElementById('register-form').addEventListener('submit', function() {
+  const btn = document.getElementById('register-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-sm"></span> Creating...';
+});
 </script>
 {% endblock %}

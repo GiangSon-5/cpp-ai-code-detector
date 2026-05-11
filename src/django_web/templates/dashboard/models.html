@@ -71,8 +71,7 @@
         <h2 class="text-2xl font-black text-white">Google Colab GPU</h2>
         <p class="text-sm mt-1" style="color:#64748b;">T4 / A100 — via ngrok tunnel</p>
       </div>
-      <div class="flex items-center gap-2 px-4 py-2 rounded-xl"
-        style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);">
+      <div class="flex items-center gap-2 px-4 py-2 rounded-xl" style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);">
         <span class="status-dot warning"></span>
         <span class="text-xs font-black" style="color:#fbbf24;">Standby</span>
       </div>
@@ -85,9 +84,7 @@
         <p class="text-xs font-black" style="color:#fbbf24;">{{ colab_vram|default:"0" }} / 16 GB</p>
       </div>
       <div class="progress-track" style="height:8px;">
-        <div class="progress-fill"
-          style="width:{% widthratio colab_vram|default:0 16 100 %}%;background:linear-gradient(90deg,#22d3ee,#fbbf24);">
-        </div>
+        <div class="progress-fill" style="width:{% widthratio colab_vram|default:0 16 100 %}%;background:linear-gradient(90deg,#22d3ee,#fbbf24);"></div>
       </div>
     </div>
 
@@ -132,8 +129,7 @@
           <span class="text-sm font-black" style="color:#22d3ee;">{{ run.f1_score|floatformat:4 }}</span>
         </td>
         <td style="padding:18px 16px;">
-          <span
-            class="badge {% if run.registry_state == 'production' %}badge-human{% else %}badge-uncertain{% endif %}">
+          <span class="badge {% if run.registry_state == 'production' %}badge-human{% else %}badge-uncertain{% endif %}">
             {{ run.registry_state|default:"archived" }}
           </span>
         </td>

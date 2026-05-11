@@ -1,24 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Analysis Report — CodeGuard AI{% endblock %}
-{% block main_class %}{% endblock %}
+{% block main_class %}p-8{% endblock %}
 
 {% block extra_css %}
 <style>
-  .glow-ai {
-    background: rgba(248, 113, 113, 0.07);
-  }
-
-  .glow-human {
-    background: rgba(74, 222, 128, 0.07);
-  }
-
-  .chunk-border-ai {
-    border-left: 4px solid #f87171;
-  }
-
-  .chunk-border-human {
-    border-left: 4px solid #4ade80;
-  }
+  .glow-ai   { background: rgba(248,113,113,0.07); }
+  .glow-human{ background: rgba(74,222,128,0.07); }
+  .chunk-border-ai  { border-left: 4px solid #f87171; }
+  .chunk-border-human { border-left: 4px solid #4ade80; }
 </style>
 {% endblock %}
 
@@ -37,16 +26,15 @@
 
   <!-- Score summary card -->
   <div class="glass px-8 py-5 rounded-3xl flex items-center gap-8"
-    style="border:1px solid {% if result.final_pred == 'AI GENERATED' %}rgba(248,113,113,0.2){% else %}rgba(74,222,128,0.2){% endif %};">
+       style="border:1px solid {% if result.final_pred == 'AI GENERATED' %}rgba(248,113,113,0.2){% else %}rgba(74,222,128,0.2){% endif %};">
     <div class="text-center border-r pr-8" style="border-color:rgba(255,255,255,0.08);">
       <p class="text-xs font-black uppercase tracking-widest" style="color:#22d3ee;">AI Probability</p>
       <p class="text-4xl font-black text-white">{{ result.final_score_pct|floatformat:1 }}%</p>
     </div>
     <div class="text-center">
       <p class="text-xs font-black uppercase tracking-widest mb-1"
-        style="color:{% if result.final_pred == 'AI GENERATED' %}#f87171{% else %}#4ade80{% endif %};">Verdict</p>
-      <span class="badge {% if result.final_pred == 'AI GENERATED' %}badge-ai{% else %}badge-human{% endif %}"
-        style="font-size:0.8rem;padding:8px 16px;">
+         style="color:{% if result.final_pred == 'AI GENERATED' %}#f87171{% else %}#4ade80{% endif %};">Verdict</p>
+      <span class="badge {% if result.final_pred == 'AI GENERATED' %}badge-ai{% else %}badge-human{% endif %}" style="font-size:0.8rem;padding:8px 16px;">
         {{ result.final_pred }}
       </span>
     </div>
@@ -66,80 +54,63 @@
 
   <!-- ── LEFT: Fingerprint XAI Panel ───────────────────────────────── -->
   <div class="flex-1 glass overflow-hidden flex flex-col" style="border-radius:28px;">
-    <div class="flex justify-between items-center px-8 py-5 border-b"
-      style="border-color:rgba(255,255,255,0.05);background:rgba(255,255,255,0.03);">
+    <div class="flex justify-between items-center px-8 py-5 border-b" style="border-color:rgba(255,255,255,0.05);background:rgba(255,255,255,0.03);">
       <h3 class="text-xs font-black uppercase tracking-widest" style="color:#64748b;">Fingerprint Analysis (XAI)</h3>
       <div class="flex items-center gap-4 text-xs font-bold uppercase tracking-widest">
-        <span class="flex items-center gap-2"><span
-            style="width:8px;height:8px;border-radius:50%;background:#f87171;display:inline-block;"></span>AI
-          Features</span>
-        <span class="flex items-center gap-2"><span
-            style="width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;"></span>Human
-          Features</span>
+        <span class="flex items-center gap-2"><span style="width:8px;height:8px;border-radius:50%;background:#f87171;display:inline-block;"></span>AI Features</span>
+        <span class="flex items-center gap-2"><span style="width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;"></span>Human Features</span>
       </div>
     </div>
 
     <div class="flex-1 overflow-y-auto custom-scrollbar p-8">
       {% if result.fingerprint %}
-      <div class="card mb-6"
-        style="border-radius:20px;padding:24px;background:rgba(34,211,238,0.04);border-color:rgba(34,211,238,0.1);">
-        <h4 class="text-xs font-black uppercase tracking-widest mb-3" style="color:#22d3ee;">Executive Summary</h4>
-        <p class="text-sm leading-relaxed" style="color:#cbd5e1;font-weight:300;">{{
-          result.fingerprint.executive_summary|safe }}</p>
-      </div>
-
-      <h4 class="text-xs font-black uppercase tracking-widest mb-4" style="color:#64748b;">Top Behavioral Signals</h4>
-      <div class="space-y-4">
-        {% for feature in result.fingerprint.top_features %}
-        <div class="card p-5"
-          style="border-radius:16px; border-left: 4px solid {% if feature.direction == 'AI' %}#f87171{% else %}#4ade80{% endif %}; background:rgba(255,255,255,0.02);">
-          <div class="flex justify-between items-center mb-3">
-            <span class="font-bold text-white text-lg">{{ feature.display_name }}</span>
-            <span class="badge"
-              style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); font-family:monospace;">Value:
-              {{ feature.value|floatformat:4 }}</span>
-          </div>
-          <div class="text-xs text-slate-400 mb-3 flex items-center gap-4">
-            <span><span class="inline-block w-2 h-2 rounded-full bg-slate-600 mr-1"></span>Human baseline: {{
-              feature.human_baseline|floatformat:4 }}</span>
-            <span><span class="inline-block w-2 h-2 rounded-full bg-slate-600 mr-1"></span>AI baseline: {{
-              feature.ai_baseline|floatformat:4 }}</span>
-          </div>
-          <p class="text-sm text-slate-300 leading-relaxed">{{ feature.insight }}</p>
+        <div class="card mb-6" style="border-radius:20px;padding:24px;background:rgba(34,211,238,0.04);border-color:rgba(34,211,238,0.1);">
+          <h4 class="text-xs font-black uppercase tracking-widest mb-3" style="color:#22d3ee;">Executive Summary</h4>
+          <p class="text-sm leading-relaxed" style="color:#cbd5e1;font-weight:300;">{{ result.fingerprint.executive_summary|safe }}</p>
         </div>
-        {% endfor %}
-      </div>
 
-      {% if result.fingerprint.all_features|length > 5 %}
-      <div class="mt-8">
-        <details class="group">
-          <summary
-            class="cursor-pointer text-xs font-black uppercase tracking-widest text-cyan-400 hover:text-cyan-300 transition-colors list-none flex items-center gap-2">
-            <svg class="w-4 h-4 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-            View All Extracted Features
-          </summary>
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            {% for feature in result.fingerprint.all_features|slice:"5:" %}
-            <div class="card p-4"
-              style="border-radius:12px; border-left: 3px solid {% if feature.direction == 'AI' %}#f87171{% else %}#4ade80{% endif %}; background:rgba(255,255,255,0.01);">
-              <div class="flex justify-between items-start mb-2">
-                <span class="font-bold text-slate-200 text-sm">{{ feature.display_name }}</span>
-                <span class="text-xs font-mono text-slate-400">{{ feature.value|floatformat:4 }}</span>
+        <h4 class="text-xs font-black uppercase tracking-widest mb-4" style="color:#64748b;">Top Behavioral Signals</h4>
+        <div class="space-y-4">
+          {% for feature in result.fingerprint.top_features %}
+            <div class="card p-5" style="border-radius:16px; border-left: 4px solid {% if feature.direction == 'AI' %}#f87171{% else %}#4ade80{% endif %}; background:rgba(255,255,255,0.02);">
+              <div class="flex justify-between items-center mb-3">
+                <span class="font-bold text-white text-lg">{{ feature.display_name }}</span>
+                <span class="badge" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); font-family:monospace;">Value: {{ feature.value|floatformat:4 }}</span>
               </div>
-              <p class="text-xs text-slate-500 line-clamp-2">{{ feature.insight }}</p>
+              <div class="text-xs text-slate-400 mb-3 flex items-center gap-4">
+                <span><span class="inline-block w-2 h-2 rounded-full bg-slate-600 mr-1"></span>Human baseline: {{ feature.human_baseline|floatformat:4 }}</span>
+                <span><span class="inline-block w-2 h-2 rounded-full bg-slate-600 mr-1"></span>AI baseline: {{ feature.ai_baseline|floatformat:4 }}</span>
+              </div>
+              <p class="text-sm text-slate-300 leading-relaxed">{{ feature.insight }}</p>
             </div>
-            {% endfor %}
-          </div>
-        </details>
-      </div>
-      {% endif %}
+          {% endfor %}
+        </div>
+        
+        {% if result.fingerprint.all_features|length > 5 %}
+        <div class="mt-8">
+          <details class="group">
+            <summary class="cursor-pointer text-xs font-black uppercase tracking-widest text-cyan-400 hover:text-cyan-300 transition-colors list-none flex items-center gap-2">
+              <svg class="w-4 h-4 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              View All Extracted Features
+            </summary>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              {% for feature in result.fingerprint.all_features|slice:"5:" %}
+                <div class="card p-4" style="border-radius:12px; border-left: 3px solid {% if feature.direction == 'AI' %}#f87171{% else %}#4ade80{% endif %}; background:rgba(255,255,255,0.01);">
+                  <div class="flex justify-between items-start mb-2">
+                    <span class="font-bold text-slate-200 text-sm">{{ feature.display_name }}</span>
+                    <span class="text-xs font-mono text-slate-400">{{ feature.value|floatformat:4 }}</span>
+                  </div>
+                  <p class="text-xs text-slate-500 line-clamp-2">{{ feature.insight }}</p>
+                </div>
+              {% endfor %}
+            </div>
+          </details>
+        </div>
+        {% endif %}
       {% else %}
-      <div class="flex-1 flex items-center justify-center h-full">
-        <p class="text-sm font-bold" style="color:#334155;">Fingerprint analysis not available</p>
-      </div>
+        <div class="flex-1 flex items-center justify-center h-full">
+          <p class="text-sm font-bold" style="color:#334155;">Fingerprint analysis not available</p>
+        </div>
       {% endif %}
     </div>
   </div>
@@ -167,9 +138,9 @@
     <div class="space-y-3">
       <h4 class="text-xs font-black uppercase tracking-widest" style="color:#64748b;">Chunk Breakdown</h4>
       {% for chunk in chunks %}
-      <div
-        class="card {% if chunk.label == 'AI' %}chunk-border-ai{% else %}chunk-border-human{% endif %} hover:bg-white/[0.02] transition-all cursor-pointer"
-        style="border-radius:20px;padding:20px 22px;" onclick="openChunkModal('{{ forloop.counter0 }}')">
+      <div class="card {% if chunk.label == 'AI' %}chunk-border-ai{% else %}chunk-border-human{% endif %} hover:bg-white/[0.02] transition-all cursor-pointer"
+           style="border-radius:20px;padding:20px 22px;"
+           onclick="openChunkModal('{{ forloop.counter0 }}')">
         <div class="flex justify-between items-center mb-2">
           <span class="text-xs font-bold text-white">Chunk #{{ chunk.index }}</span>
           <span class="text-xs font-black {% if chunk.label == 'AI' %}text-red-400{% else %}text-green-400{% endif %}">
@@ -177,11 +148,10 @@
           </span>
         </div>
         {% if chunk.critique %}
-        <p class="text-xs leading-relaxed line-clamp-2" style="color:#94a3b8;">{{ chunk.critique|truncatechars:120 }}
-        </p>
+        <p class="text-xs leading-relaxed line-clamp-2" style="color:#94a3b8;">{{ chunk.critique|truncatechars:120 }}</p>
         {% endif %}
         <button class="mt-3 w-full py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all"
-          style="background:rgba(255,255,255,0.03);color:#64748b;border:1px solid rgba(255,255,255,0.06);">
+                style="background:rgba(255,255,255,0.03);color:#64748b;border:1px solid rgba(255,255,255,0.06);">
           View Detailed Report
         </button>
       </div>
@@ -190,19 +160,16 @@
 
     <!-- Global Synthesis -->
     {% if result.global_critique %}
-    <div class="card"
-      style="border-radius:20px;padding:24px;background:rgba(34,211,238,0.04);border-color:rgba(34,211,238,0.1);">
+    <div class="card" style="border-radius:20px;padding:24px;background:rgba(34,211,238,0.04);border-color:rgba(34,211,238,0.1);">
       <h4 class="text-xs font-black uppercase tracking-widest mb-3" style="color:#22d3ee;">Global Synthesis</h4>
       <p class="text-sm leading-relaxed" style="color:#cbd5e1;font-weight:300;">{{ result.global_critique }}</p>
     </div>
     {% endif %}
 
     <!-- Model info -->
-    <div class="card"
-      style="border-radius:16px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+    <div class="card" style="border-radius:16px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
       <span class="text-xs font-bold" style="color:#64748b;">Model Used</span>
-      <span class="badge {% if 'OOP' in result.model_used %}badge-oop{% else %}badge-uncertain{% endif %}">{{
-        result.model_used }}</span>
+      <span class="badge {% if 'OOP' in result.model_used %}badge-oop{% else %}badge-uncertain{% endif %}">{{ result.model_used }}</span>
     </div>
 
     <!-- Actions -->
@@ -223,7 +190,7 @@
   <div class="modal-panel" style="position:relative;">
     <button class="modal-close" onclick="closeChunkModal('{{ forloop.counter0 }}')">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </button>
 
@@ -246,8 +213,7 @@
       <!-- Modal body: code + commentary -->
       <div class="flex gap-8 flex-1 overflow-hidden">
         <!-- Snippet -->
-        <div class="flex-1 overflow-auto custom-scrollbar rounded-2xl border"
-          style="background:#0d1117;border-color:rgba(255,255,255,0.06);padding:24px;font-family:'Fira Code',monospace;font-size:0.8rem;line-height:2;">
+        <div class="flex-1 overflow-auto custom-scrollbar rounded-2xl border" style="background:#0d1117;border-color:rgba(255,255,255,0.06);padding:24px;font-family:'Fira Code',monospace;font-size:0.8rem;line-height:2;">
           {% if chunk.snippet %}
           <pre style="color:#c9d1d9;white-space:pre-wrap;">{{ chunk.snippet }}</pre>
           {% else %}
@@ -291,49 +257,48 @@
   <div class="card text-center" style="max-width:480px;padding:48px;">
     <div class="spinner mx-auto mb-6"></div>
     <h3 class="text-2xl font-black text-white">Processing...</h3>
-    <p class="text-sm mt-3 mb-8" style="color:#64748b;">Your submission has been received. The AI engine is analyzing
-      the code. This page will auto-refresh when complete.</p>
-    <a href="{% url 'submissions:result' code_hash=submission.code_hash %}" class="btn btn-primary"
-      style="border-radius:16px;">
+    <p class="text-sm mt-3 mb-8" style="color:#64748b;">Your submission has been received. The AI engine is analyzing the code. This page will auto-refresh when complete.</p>
+    <a href="{% url 'submissions:result' code_hash=submission.code_hash %}"
+       class="btn btn-primary" style="border-radius:16px;">
       Refresh Results
     </a>
   </div>
 </div>
 <script>
-  setTimeout(() => {
-    window.location.reload();
-  }, 3000);
+    setTimeout(() => {
+        window.location.reload();
+    }, 3000);
 </script>
 {% endif %}
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  function openChunkModal(idx) {
-    const m = document.getElementById('modal-' + idx);
-    if (m) { m.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
-  }
-  function closeChunkModal(idx) {
-    const m = document.getElementById('modal-' + idx);
-    if (m) { m.classList.add('hidden'); document.body.style.overflow = ''; }
-  }
-  // Close modal on overlay click
-  document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', function (e) {
-      if (e.target === this) {
-        this.classList.add('hidden');
-        document.body.style.overflow = '';
-      }
-    });
-  });
-  // Close on ESC
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(m => {
-        m.classList.add('hidden');
-        document.body.style.overflow = '';
-      });
+function openChunkModal(idx) {
+  const m = document.getElementById('modal-' + idx);
+  if (m) { m.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+}
+function closeChunkModal(idx) {
+  const m = document.getElementById('modal-' + idx);
+  if (m) { m.classList.add('hidden'); document.body.style.overflow = ''; }
+}
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.classList.add('hidden');
+      document.body.style.overflow = '';
     }
   });
+});
+// Close on ESC
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(m => {
+      m.classList.add('hidden');
+      document.body.style.overflow = '';
+    });
+  }
+});
 </script>
 {% endblock %}

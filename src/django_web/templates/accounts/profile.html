@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Settings — CodeGuard AI{% endblock %}
-{% block main_class %}{% endblock %}
+{% block main_class %}p-8{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto animate-slide-up">
@@ -19,7 +19,7 @@
 
       <div class="flex items-center gap-6 mb-8">
         <div class="w-20 h-20 rounded-2xl border-2 flex items-center justify-center text-3xl font-black"
-          style="border-color:#334155;background:linear-gradient(135deg,rgba(34,211,238,0.1),rgba(59,130,246,0.1));color:#22d3ee;">
+             style="border-color:#334155;background:linear-gradient(135deg,rgba(34,211,238,0.1),rgba(59,130,246,0.1));color:#22d3ee;">
           {{ user.username|slice:":1"|upper }}
         </div>
         <div>
@@ -50,22 +50,17 @@
       <h3 class="text-xs font-black uppercase tracking-widest mb-6" style="color:#22d3ee;">Security</h3>
       <div class="space-y-5">
         <div class="space-y-2">
-          <label class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Current
-            Password</label>
-          <input type="password" name="old_password" class="input-dark" placeholder="••••••••"
-            autocomplete="current-password">
+          <label class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Current Password</label>
+          <input type="password" name="old_password" class="input-dark" placeholder="••••••••" autocomplete="current-password">
         </div>
         <div class="grid grid-cols-2 gap-5">
           <div class="space-y-2">
-            <label class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">New
-              Password</label>
-            <input type="password" name="new_password1" class="input-dark" placeholder="••••••••"
-              autocomplete="new-password">
+            <label class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">New Password</label>
+            <input type="password" name="new_password1" class="input-dark" placeholder="••••••••" autocomplete="new-password">
           </div>
           <div class="space-y-2">
             <label class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Confirm New</label>
-            <input type="password" name="new_password2" class="input-dark" placeholder="••••••••"
-              autocomplete="new-password">
+            <input type="password" name="new_password2" class="input-dark" placeholder="••••••••" autocomplete="new-password">
           </div>
         </div>
       </div>
@@ -102,7 +97,8 @@
 
     <!-- Actions -->
     <div class="flex gap-4 justify-end">
-      <button type="button" onclick="history.back()" class="btn btn-ghost" style="border-radius:14px;">
+      <button type="button" onclick="history.back()"
+              class="btn btn-ghost" style="border-radius:14px;">
         Discard
       </button>
       <button type="submit" class="btn btn-primary" style="border-radius:14px;">

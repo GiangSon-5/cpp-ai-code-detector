@@ -9,51 +9,49 @@
   <div class="flex justify-between items-end mb-8">
     <div>
       <div class="flex items-center gap-3 mb-2">
-        <a href="{% url 'submissions:history' %}"
-          class="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">← Back to
-          History</a>
-        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest"
-          style="background:rgba(192,132,252,0.15);color:#c084fc;">Batch #{{ batch.id }}</span>
+        <a href="{% url 'submissions:history' %}" class="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">← Back to History</a>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest" style="background:rgba(192,132,252,0.15);color:#c084fc;">Batch #{{ batch.id }}</span>
       </div>
       <h2 class="text-4xl font-black text-white">{{ batch.name }}</h2>
       <p class="text-sm mt-2" style="color:#64748b;">Uploaded on {{ batch.timestamp|date:"M d, Y H:i" }}</p>
     </div>
-
+    
     <div class="flex gap-4">
-      <!-- Stats summary -->
-      <div class="flex gap-4 p-3 rounded-2xl glass" style="border:1px solid rgba(255,255,255,0.05);">
-        <div class="text-center px-4">
-          <p class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Total</p>
-          <p class="text-xl font-black text-white">{{ stats.total }}</p>
+        <!-- Stats summary -->
+        <div class="flex gap-4 p-3 rounded-2xl glass" style="border:1px solid rgba(255,255,255,0.05);">
+            <div class="text-center px-4">
+                <p class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Total</p>
+                <p class="text-xl font-black text-white">{{ stats.total }}</p>
+            </div>
+            <div class="w-px bg-white/10"></div>
+            <div class="text-center px-4">
+                <p class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:#f87171;">AI</p>
+                <p class="text-xl font-black" style="color:#f87171;">{{ stats.ai_count }}</p>
+            </div>
+            <div class="w-px bg-white/10"></div>
+            <div class="text-center px-4">
+                <p class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:#4ade80;">Human</p>
+                <p class="text-xl font-black" style="color:#4ade80;">{{ stats.human_count }}</p>
+            </div>
+            <div class="w-px bg-white/10"></div>
+            <div class="text-center px-4">
+                <p class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:#fbbf24;">Pending</p>
+                <p class="text-xl font-black" style="color:#fbbf24;" id="pending-count">{{ stats.pending }}</p>
+            </div>
         </div>
-        <div class="w-px bg-white/10"></div>
-        <div class="text-center px-4">
-          <p class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:#f87171;">AI</p>
-          <p class="text-xl font-black" style="color:#f87171;">{{ stats.ai_count }}</p>
-        </div>
-        <div class="w-px bg-white/10"></div>
-        <div class="text-center px-4">
-          <p class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:#4ade80;">Human</p>
-          <p class="text-xl font-black" style="color:#4ade80;">{{ stats.human_count }}</p>
-        </div>
-        <div class="w-px bg-white/10"></div>
-        <div class="text-center px-4">
-          <p class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:#fbbf24;">Pending</p>
-          <p class="text-xl font-black" style="color:#fbbf24;" id="pending-count">{{ stats.pending }}</p>
-        </div>
-      </div>
     </div>
   </div>
 
   <!-- Search bar -->
   <div class="mb-6 relative">
-    <svg class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4" style="color:#64748b;" fill="none"
-      stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    <svg class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4" style="color:#64748b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
     </svg>
-    <input type="text" id="search-input" class="input-dark pl-12" style="border-radius:16px;"
-      placeholder="Search file name, prediction..." oninput="filterTable(this.value)">
+    <input type="text" id="search-input"
+           class="input-dark pl-12"
+           style="border-radius:16px;"
+           placeholder="Search file name, prediction..."
+           oninput="filterTable(this.value)">
   </div>
 
   <!-- Table card -->
@@ -74,21 +72,20 @@
         <tbody>
           {% for sub in submissions|dictsortreversed:"confidence" %}
           <tr class="submission-row" data-search="{{ sub.filename }} {{ sub.prediction }}"
-            onclick="window.location='{% url 'submissions:result' code_hash=sub.code_hash %}'" style="cursor:pointer;">
+              onclick="window.location='{% url 'submissions:result' code_hash=sub.code_hash %}'"
+              style="cursor:pointer;">
             <td style="padding:22px 24px;">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style="background:{% if sub.prediction == 'AI GENERATED' %}rgba(248,113,113,0.1){% elif sub.prediction == 'HUMAN WRITTEN' %}rgba(74,222,128,0.1){% else %}rgba(255,255,255,0.05){% endif %};">
+                     style="background:{% if sub.prediction == 'AI GENERATED' %}rgba(248,113,113,0.1){% elif sub.prediction == 'HUMAN WRITTEN' %}rgba(74,222,128,0.1){% else %}rgba(255,255,255,0.05){% endif %};">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    style="color:{% if sub.prediction == 'AI GENERATED' %}#f87171{% elif sub.prediction == 'HUMAN WRITTEN' %}#4ade80{% else %}#64748b{% endif %};">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                       style="color:{% if sub.prediction == 'AI GENERATED' %}#f87171{% elif sub.prediction == 'HUMAN WRITTEN' %}#4ade80{% else %}#64748b{% endif %};">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
                   </svg>
                 </div>
                 <div>
                   <p class="text-sm font-bold text-white">{{ sub.filename }}</p>
-                  <p class="text-[10px] uppercase font-mono tracking-widest mt-0.5" style="color:#64748b;">{{
-                    sub.code_hash|slice:":8" }}</p>
+                  <p class="text-[10px] uppercase font-mono tracking-widest mt-0.5" style="color:#64748b;">{{ sub.code_hash|slice:":8" }}</p>
                 </div>
               </div>
             </td>
@@ -96,16 +93,14 @@
               {% if sub.confidence is not None %}
               <div class="flex items-center gap-3">
                 <span class="w-2 h-2 rounded-full flex-shrink-0"
-                  style="background:{% if sub.confidence > 0.7 %}#f87171{% elif sub.confidence > 0.4 %}#fb923c{% else %}#4ade80{% endif %};box-shadow:0 0 8px {% if sub.confidence > 0.7 %}rgba(248,113,113,0.4){% elif sub.confidence > 0.4 %}rgba(251,146,60,0.4){% else %}rgba(74,222,128,0.4){% endif %};"></span>
+                      style="background:{% if sub.confidence > 0.7 %}#f87171{% elif sub.confidence > 0.4 %}#fb923c{% else %}#4ade80{% endif %};box-shadow:0 0 8px {% if sub.confidence > 0.7 %}rgba(248,113,113,0.4){% elif sub.confidence > 0.4 %}rgba(251,146,60,0.4){% else %}rgba(74,222,128,0.4){% endif %};"></span>
                 <span class="text-sm font-bold text-white">{{ sub.confidence|floatformat:4 }}</span>
               </div>
               {% else %}
               <span class="text-sm flex items-center gap-2" style="color:#fbbf24;">
                 <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                  </path>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 Processing
               </span>
@@ -113,19 +108,19 @@
             </td>
             <td style="padding:22px 16px;">
               {% if sub.prediction == 'AI GENERATED' %}
-              <span class="badge badge-ai">AI Generated</span>
+                <span class="badge badge-ai">AI Generated</span>
               {% elif sub.prediction == 'HUMAN WRITTEN' %}
-              <span class="badge badge-human">Human</span>
+                <span class="badge badge-human">Human</span>
               {% else %}
-              <span class="badge badge-uncertain">Pending</span>
+                <span class="badge badge-uncertain">Pending</span>
               {% endif %}
             </td>
             <td style="padding:22px 16px;">
               <span class="text-xs font-medium" style="color:#64748b;">{{ sub.file_size_bytes|filesizeformat }}</span>
             </td>
             <td style="padding:22px 16px;text-align:right;" onclick="event.stopPropagation()">
-              <a href="{% url 'submissions:result' code_hash=sub.code_hash %}" class="btn btn-ghost"
-                style="padding:8px 16px;border-radius:10px;font-size:0.65rem;">
+              <a href="{% url 'submissions:result' code_hash=sub.code_hash %}"
+                 class="btn btn-ghost" style="padding:8px 16px;border-radius:10px;font-size:0.65rem;">
                 View →
               </a>
             </td>
@@ -136,10 +131,8 @@
     </div>
 
     <!-- Footer stats -->
-    <div class="flex justify-between items-center px-8 py-5 border-t"
-      style="border-color:rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
-      <span class="text-xs font-bold" style="color:#64748b;">{{ submissions|length }} file{{
-        submissions|length|pluralize }}</span>
+    <div class="flex justify-between items-center px-8 py-5 border-t" style="border-color:rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
+      <span class="text-xs font-bold" style="color:#64748b;">{{ submissions|length }} file{{ submissions|length|pluralize }}</span>
       {% if stats.pending > 0 %}
       <span class="text-xs font-bold text-amber-400">Page will auto-refresh when processing finishes...</span>
       {% endif %}
@@ -148,11 +141,9 @@
     {% else %}
     <!-- Empty state -->
     <div class="text-center py-20">
-      <div class="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center"
-        style="background:rgba(255,255,255,0.04);">
+      <div class="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center" style="background:rgba(255,255,255,0.04);">
         <svg class="w-8 h-8" style="color:#334155;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
       </div>
       <h3 class="text-xl font-black text-white">Empty Batch</h3>
@@ -165,20 +156,20 @@
 
 {% block extra_js %}
 <script>
-  function filterTable(query) {
-    const q = query.toLowerCase();
-    document.querySelectorAll('.submission-row').forEach(row => {
-      const text = row.dataset.search.toLowerCase();
-      row.style.display = text.includes(q) ? '' : 'none';
-    });
-  }
+function filterTable(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.submission-row').forEach(row => {
+    const text = row.dataset.search.toLowerCase();
+    row.style.display = text.includes(q) ? '' : 'none';
+  });
+}
 
-  // Auto refresh if there are pending files
-  const pendingCount = parseInt(document.getElementById('pending-count').textContent);
-  if (pendingCount > 0) {
+// Auto refresh if there are pending files
+const pendingCount = parseInt(document.getElementById('pending-count').textContent);
+if (pendingCount > 0) {
     setTimeout(() => {
-      window.location.reload();
+        window.location.reload();
     }, 5000); // Reload every 5 seconds until done
-  }
+}
 </script>
 {% endblock %}

@@ -8,8 +8,7 @@
     <p class="text-xs font-black uppercase tracking-widest" style="color:#818cf8;">System Database</p>
     <h1 class="text-3xl font-black text-white">Database Explorer</h1>
   </div>
-  <div class="flex items-center gap-3 px-5 py-3 rounded-2xl"
-    style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);">
+  <div class="flex items-center gap-3 px-5 py-3 rounded-2xl" style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);">
     <span class="status-dot online"></span>
     <span class="text-xs font-black" style="color:#4ade80;">PostgreSQL Connected</span>
   </div>
@@ -42,11 +41,9 @@
 <!-- Analysis records table -->
 <div class="glass rounded-3xl overflow-hidden">
   <div class="flex justify-between items-center px-8 py-6 border-b" style="border-color:rgba(255,255,255,0.05);">
-    <h3 class="text-xs font-black uppercase tracking-widest" style="color:#818cf8;">Analysis Records — BronzeSubmission
-      Table</h3>
-    <input type="text" id="db-search" class="input-dark"
-      style="width:240px;border-radius:12px;padding:8px 16px;font-size:0.8rem;" placeholder="Search records..."
-      oninput="filterDbTable(this.value)">
+    <h3 class="text-xs font-black uppercase tracking-widest" style="color:#818cf8;">Analysis Records — BronzeSubmission Table</h3>
+    <input type="text" id="db-search" class="input-dark" style="width:240px;border-radius:12px;padding:8px 16px;font-size:0.8rem;"
+           placeholder="Search records..." oninput="filterDbTable(this.value)">
   </div>
 
   <div class="overflow-x-auto">
@@ -68,7 +65,7 @@
           <td style="padding:18px 24px;">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black"
-                style="background:rgba(34,211,238,0.1);color:#22d3ee;">
+                   style="background:rgba(34,211,238,0.1);color:#22d3ee;">
                 {{ sub.user.username|slice:":1"|upper }}
               </div>
               <span class="text-sm font-bold text-white">{{ sub.user.username }}</span>
@@ -79,8 +76,7 @@
           </td>
           <td style="padding:18px 16px;">
             {% if sub.confidence is not None %}
-            <span
-              class="text-sm font-black {% if sub.confidence > 0.7 %}text-red-400{% elif sub.confidence > 0.4 %}text-orange-400{% else %}text-green-400{% endif %}">
+            <span class="text-sm font-black {% if sub.confidence > 0.7 %}text-red-400{% elif sub.confidence > 0.4 %}text-orange-400{% else %}text-green-400{% endif %}">
               {{ sub.confidence|floatformat:4 }}
             </span>
             {% else %}
@@ -89,11 +85,11 @@
           </td>
           <td style="padding:18px 16px;">
             {% if sub.prediction == 'AI GENERATED' %}
-            <span class="badge badge-ai">AI</span>
+              <span class="badge badge-ai">AI</span>
             {% elif sub.prediction == 'HUMAN WRITTEN' %}
-            <span class="badge badge-human">Human</span>
+              <span class="badge badge-human">Human</span>
             {% else %}
-            <span class="badge badge-uncertain">Pending</span>
+              <span class="badge badge-uncertain">Pending</span>
             {% endif %}
           </td>
           <td style="padding:18px 16px;">
@@ -103,8 +99,8 @@
             <span class="text-xs" style="color:#475569;">{{ sub.timestamp|date:"d/m/y H:i" }}</span>
           </td>
           <td style="padding:18px 16px;">
-            <a href="{% url 'submissions:result' code_hash=sub.code_hash %}" class="btn btn-ghost"
-              style="padding:6px 14px;border-radius:8px;font-size:0.6rem;" target="_blank">
+            <a href="{% url 'submissions:result' code_hash=sub.code_hash %}"
+               class="btn btn-ghost" style="padding:6px 14px;border-radius:8px;font-size:0.6rem;" target="_blank">
               View
             </a>
           </td>
@@ -118,8 +114,7 @@
     </table>
   </div>
 
-  <div class="px-8 py-5 border-t flex justify-between items-center"
-    style="border-color:rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
+  <div class="px-8 py-5 border-t flex justify-between items-center" style="border-color:rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
     <span class="text-xs font-bold" style="color:#64748b;">{{ all_submissions|length }} records</span>
   </div>
 </div>
@@ -141,16 +136,11 @@
   <div class="glass rounded-3xl p-6">
     <h3 class="text-xs font-black uppercase tracking-widest mb-4" style="color:#818cf8;">Table: auth_user</h3>
     <div class="space-y-2">
-      <div class="flex justify-between text-xs py-2 border-b" style="border-color:rgba(255,255,255,0.04);"><code
-          style="color:#22d3ee;">id</code><code style="color:#64748b;">BIGINT PK</code></div>
-      <div class="flex justify-between text-xs py-2 border-b" style="border-color:rgba(255,255,255,0.04);"><code
-          style="color:#22d3ee;">username</code><code style="color:#64748b;">VARCHAR(150)</code></div>
-      <div class="flex justify-between text-xs py-2 border-b" style="border-color:rgba(255,255,255,0.04);"><code
-          style="color:#22d3ee;">email</code><code style="color:#64748b;">VARCHAR(254)</code></div>
-      <div class="flex justify-between text-xs py-2 border-b" style="border-color:rgba(255,255,255,0.04);"><code
-          style="color:#22d3ee;">is_staff</code><code style="color:#64748b;">BOOLEAN</code></div>
-      <div class="flex justify-between text-xs py-2"><code style="color:#22d3ee;">date_joined</code><code
-          style="color:#64748b;">TIMESTAMP</code></div>
+      <div class="flex justify-between text-xs py-2 border-b" style="border-color:rgba(255,255,255,0.04);"><code style="color:#22d3ee;">id</code><code style="color:#64748b;">BIGINT PK</code></div>
+      <div class="flex justify-between text-xs py-2 border-b" style="border-color:rgba(255,255,255,0.04);"><code style="color:#22d3ee;">username</code><code style="color:#64748b;">VARCHAR(150)</code></div>
+      <div class="flex justify-between text-xs py-2 border-b" style="border-color:rgba(255,255,255,0.04);"><code style="color:#22d3ee;">email</code><code style="color:#64748b;">VARCHAR(254)</code></div>
+      <div class="flex justify-between text-xs py-2 border-b" style="border-color:rgba(255,255,255,0.04);"><code style="color:#22d3ee;">is_staff</code><code style="color:#64748b;">BOOLEAN</code></div>
+      <div class="flex justify-between text-xs py-2" ><code style="color:#22d3ee;">date_joined</code><code style="color:#64748b;">TIMESTAMP</code></div>
     </div>
   </div>
 
@@ -177,11 +167,11 @@
 
 {% block extra_js %}
 <script>
-  function filterDbTable(q) {
-    q = q.toLowerCase();
-    document.querySelectorAll('.db-row').forEach(row => {
-      row.style.display = row.dataset.search.toLowerCase().includes(q) ? '' : 'none';
-    });
-  }
+function filterDbTable(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.db-row').forEach(row => {
+    row.style.display = row.dataset.search.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
 </script>
 {% endblock %}

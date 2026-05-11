@@ -127,7 +127,7 @@ class AgentService:
         top_ai_signals = list(dict.fromkeys(top_ai_signals))[:5]
         top_hu_signals = list(dict.fromkeys(top_hu_signals))[:5]
 
-        # ─── NODE 5: FINGERPRINT XAI (LightGBM) ───────────────────
+        # ─── NODE 5: FINGERPRINT XAI (LightGBM + SHAP) ───────────
         fingerprint_result = self._fingerprint_engine.analyze(raw_code)
 
         inference_ms = int((time.perf_counter() - t0) * 1000)
@@ -254,8 +254,9 @@ class AgentService:
             t for c in chunks for t in c.top_hu
         ))[:5]
 
-        # 95-98% — Fingerprint
-        yield SSEProgressEvent(step="fingerprint", progress=98, message="Generating XAI Fingerprint...")
+        yield SSEProgressEvent(step="critique", progress=90, message="Generating XAI fingerprint...")
+
+        # ─── NODE 5: FINGERPRINT XAI ──────────────────────────────
         fingerprint_result = self._fingerprint_engine.analyze(raw_code)
 
         # 100% — Final result

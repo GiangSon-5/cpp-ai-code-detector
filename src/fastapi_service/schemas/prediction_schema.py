@@ -29,7 +29,7 @@ class AnalyzeResponse(BaseModel):
     global_critique: str = ""
     global_html: str = ""
     chunks: list[ChunkResult] = Field(default_factory=list)
-    fingerprint: FingerprintResult | None = None  # LightGBM + SHAP XAI (Node 5)
+    fingerprint: FingerprintResult | None = None  # LightGBM + SHAP XAI
 
 
 
