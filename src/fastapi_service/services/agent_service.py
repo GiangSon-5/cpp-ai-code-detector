@@ -132,11 +132,19 @@ class AgentService:
 
         inference_ms = int((time.perf_counter() - t0) * 1000)
 
+        # ─── Compute individual model scores ─────────────────────
+        dl_score_raw = round(analyzer_result["mean_score"], 4)  # RoBERTa before judge
+        ml_score_raw = round(fingerprint_result.lgbm_score if fingerprint_result else 0.5, 4)
+        hybrid_score_raw = round(0.6 * dl_score_raw + 0.4 * ml_score_raw, 4)
+
         # ─── BUILD RESPONSE ───────────────────────────────────────
         response = AnalyzeResponse(
             final_pred=prediction,
             final_score=round(mean_score, 4),
             model_used=model_used,
+            dl_score=dl_score_raw,
+            ml_score=ml_score_raw,
+            hybrid_score=hybrid_score_raw,
             perplexity=round(perplexity, 2),
             max_ppl=round(max_ppl, 2),
             burstiness=round(burstiness, 2),
@@ -262,10 +270,18 @@ class AgentService:
         # 100% — Final result
         inference_ms = int((time.perf_counter() - t0) * 1000)
 
+        # Compute individual model scores
+        dl_score_raw = round(analyzer_result["mean_score"], 4)
+        ml_score_raw = round(fingerprint_result.lgbm_score if fingerprint_result else 0.5, 4)
+        hybrid_score_raw = round(0.6 * dl_score_raw + 0.4 * ml_score_raw, 4)
+
         final = AnalyzeResponse(
             final_pred=prediction,
             final_score=round(mean_score, 4),
             model_used=model_used,
+            dl_score=dl_score_raw,
+            ml_score=ml_score_raw,
+            hybrid_score=hybrid_score_raw,
             perplexity=round(perplexity, 2),
             max_ppl=round(max_ppl, 2),
             burstiness=round(burstiness, 2),

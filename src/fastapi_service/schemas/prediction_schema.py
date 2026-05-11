@@ -20,6 +20,10 @@ class AnalyzeResponse(BaseModel):
     final_pred: str = Field(..., description="AI GENERATED | HUMAN WRITTEN")
     final_score: float = Field(..., ge=0.0, le=1.0)
     model_used: str = Field(..., description="C++ OOP Model | C++ Normal Model")
+    # Individual model confidence scores (for UI display)
+    dl_score: float = Field(0.0, ge=0.0, le=1.0, description="DL model (RoBERTa Ensemble) AI probability")
+    ml_score: float = Field(0.0, ge=0.0, le=1.0, description="ML model (LightGBM) AI probability")
+    hybrid_score: float = Field(0.0, ge=0.0, le=1.0, description="Weighted hybrid (0.6*DL + 0.4*ML)")
     perplexity: float = 0.0
     max_ppl: float = 0.0
     burstiness: float = 0.0

@@ -238,7 +238,17 @@ def result_view(request, code_hash):
 
     result = submission.result_json or {}
     if result:
-        result["final_score_pct"] = result.get("final_score", 0) * 100
+        fs = result.get("final_score", 0)
+        result["final_score_pct"] = fs * 100
+
+        # Individual model score percentages (backward-compat: fallback to final_score)
+        dl  = result.get("dl_score",     fs)
+        ml  = result.get("ml_score",     result.get("fingerprint", {}).get("lgbm_score", 0.5) if result.get("fingerprint") else fs)
+        hyb = result.get("hybrid_score", round(0.6 * dl + 0.4 * ml, 4))
+        result["dl_score_pct"]     = round(dl  * 100, 1)
+        result["ml_score_pct"]     = round(ml  * 100, 1)
+        result["hybrid_score_pct"] = round(hyb * 100, 1)
+
         for chunk in result.get("chunks", []):
             chunk["score_pct"] = chunk.get("score", 0) * 100
 
@@ -255,7 +265,9 @@ def result_view(request, code_hash):
         "submission": submission,
         "result": result,
         "chunks": result.get("chunks", []),
+        "raw_code": submission.raw_code,  # for source code panel
     })
+
 
 
 @login_required
