@@ -27,9 +27,14 @@ User = get_user_model()
 
 @login_required
 def dashboard_view(request):
-    """Main dashboard with aggregate statistics."""
+    """Main dashboard with aggregate statistics. Admin only."""
     t0 = time.perf_counter()
     user = request.user
+
+    # Non-staff users should use the submit page, not the admin dashboard
+    if not user.is_staff:
+        from django.shortcuts import redirect as _redirect
+        return _redirect("/submit/")
 
     user_submissions = BronzeSubmission.objects.filter(user=user)
     user_total = user_submissions.count()

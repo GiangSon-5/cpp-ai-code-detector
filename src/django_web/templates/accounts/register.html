@@ -19,10 +19,14 @@
     <form method="post" id="register-form" class="space-y-5">
       {% csrf_token %}
 
-      {% if form.non_field_errors %}
-      <div class="alert alert-error">
-        <span>{{ form.non_field_errors.0 }}</span>
-        <button type="button" class="alert-close" onclick="this.parentElement.remove()">✕</button>
+      {% if messages %}
+      <div class="space-y-2">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} flex items-center justify-between">
+          <span>{{ message }}</span>
+          <button type="button" class="alert-close" onclick="this.parentElement.remove()">✕</button>
+        </div>
+        {% endfor %}
       </div>
       {% endif %}
 
@@ -30,30 +34,26 @@
       <div class="space-y-2">
         <label for="id_username" class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Username</label>
         <input type="text" id="id_username" name="username" class="input-dark" placeholder="your_username"
-               value="{{ form.username.value|default:'' }}" autocomplete="username" autofocus>
-        {% if form.username.errors %}<p class="text-xs" style="color:#f87171;">{{ form.username.errors.0 }}</p>{% endif %}
+               autocomplete="username" autofocus>
       </div>
 
       <!-- Email -->
       <div class="space-y-2">
-        <label for="id_email" class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Email Address</label>
-        <input type="email" id="id_email" name="email" class="input-dark" placeholder="you@ut.edu.vn"
-               value="{{ form.email.value|default:'' }}" autocomplete="email">
-        {% if form.email.errors %}<p class="text-xs" style="color:#f87171;">{{ form.email.errors.0 }}</p>{% endif %}
+        <label for="id_email" class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Email Address <span style="color:#475569;font-weight:400;">(optional)</span></label>
+        <input type="email" id="id_email" name="email" class="input-dark" placeholder="you@example.com"
+               autocomplete="email">
       </div>
 
       <!-- Password 1 -->
       <div class="space-y-2">
         <label for="id_password1" class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Password</label>
-        <input type="password" id="id_password1" name="password1" class="input-dark" placeholder="min 8 characters" autocomplete="new-password">
-        {% if form.password1.errors %}<p class="text-xs" style="color:#f87171;">{{ form.password1.errors.0 }}</p>{% endif %}
+        <input type="password" id="id_password1" name="password1" class="input-dark" placeholder="min 6 characters" autocomplete="new-password">
       </div>
 
       <!-- Password 2 -->
       <div class="space-y-2">
         <label for="id_password2" class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Confirm Password</label>
         <input type="password" id="id_password2" name="password2" class="input-dark" placeholder="••••••••" autocomplete="new-password">
-        {% if form.password2.errors %}<p class="text-xs" style="color:#f87171;">{{ form.password2.errors.0 }}</p>{% endif %}
       </div>
 
       <button type="submit" id="register-btn" class="btn btn-primary w-full mt-2" style="border-radius:16px;padding:16px;">
@@ -84,3 +84,4 @@ document.getElementById('register-form').addEventListener('submit', function() {
 });
 </script>
 {% endblock %}
+

@@ -105,7 +105,7 @@ STATIC_ROOT = PROJECT_ROOT / "staticfiles"
 
 # ── AUTH ───────────────────────────────────────────────────────────
 LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "/dashboard/"
+LOGIN_REDIRECT_URL = "/submit/"   # Default fallback; overridden per role in login_view
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 # ── FASTAPI AI SERVICE ─────────────────────────────────────────────

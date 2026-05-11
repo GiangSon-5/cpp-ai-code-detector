@@ -40,13 +40,23 @@ def login_view(request):
             logger.info(
                 module="accounts.views",
                 function="login_view",
-                message=f"User '{username}' logged in successfully",
+                message=f"User '{username}' logged in successfully (is_staff={user.is_staff})",
                 input_data={"username": username},
-                output_data={"user_id": user.id},
+                output_data={"user_id": user.id, "is_staff": user.is_staff},
                 latency_ms=(time.perf_counter() - t0) * 1000,
             )
-            next_url = request.GET.get("next", "/dashboard/")
-            return redirect(next_url)
+            # Redirect: admin → dashboard, user thường → submit page
+            next_url = request.GET.get("next", "")
+            if user.is_staff:
+                # Admin: dùng ?next nếu hợp lệ, không thì vào dashboard
+                if next_url and not next_url.startswith("/accounts/"):
+                    return redirect(next_url)
+                return redirect("/dashboard/")
+            else:
+                # User thường: luôn vào trang submit (không cho vào dashboard)
+                if next_url and not next_url.startswith("/dashboard/") and not next_url.startswith("/accounts/"):
+                    return redirect(next_url)
+                return redirect("/submit/")
         else:
             messages.error(request, "Sai tên đăng nhập hoặc mật khẩu.")
             logger.warning(
@@ -67,8 +77,9 @@ def register_view(request):
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
         email = request.POST.get("email", "").strip()
-        password = request.POST.get("password", "")
-        password2 = request.POST.get("password2", "")
+        # register.html uses name="password1" and name="password2"
+        password = request.POST.get("password1", "")  # matches <input name="password1">
+        password2 = request.POST.get("password2", "")  # matches <input name="password2">
         organization = request.POST.get("organization", "").strip()
 
         # Validation
@@ -78,8 +89,8 @@ def register_view(request):
         if not password:
             errors.append("Mật khẩu không được để trống.")
         if password != password2:
-            errors.append("Mật khẩu không khớp.")
-        if len(password) < 6:
+            errors.append("Mật khẩu xác nhận không khớp.")
+        if password and len(password) < 6:
             errors.append("Mật khẩu phải có ít nhất 6 ký tự.")
         if User.objects.filter(username=username).exists():
             errors.append("Tên đăng nhập đã tồn tại.")
@@ -110,7 +121,7 @@ def register_view(request):
                 role="student",
             )
             login(request, user)
-            messages.success(request, "Đăng ký thành công!")
+            messages.success(request, "Đăng ký thành công! Chào mừng bạn đến với CodeGuard AI.")
             logger.info(
                 module="accounts.views",
                 function="register_view",
@@ -119,7 +130,8 @@ def register_view(request):
                 output_data={"user_id": user.id},
                 latency_ms=(time.perf_counter() - t0) * 1000,
             )
-            return redirect("/dashboard/")
+            # Sau đăng ký, user thường → trang submit để bắt đầu dùng ngay
+            return redirect("/submit/")
         except Exception as exc:
             messages.error(request, f"Lỗi đăng ký: {exc}")
             logger.error(
