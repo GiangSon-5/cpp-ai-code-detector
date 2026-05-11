@@ -47,11 +47,12 @@ def _get_gpu_stats() -> dict:
         import torch
         if torch.cuda.is_available():
             used  = torch.cuda.memory_allocated() / 1024**3
-            total = torch.cuda.get_device_properties(0).total_memory / 1024**3
-            pct   = used / total * 100 if total > 0 else 0
+            # Limit display to 4GB as requested by user
+            total_display = 4.0
+            pct   = used / total_display * 100 if total_display > 0 else 0
             return {
                 "gpu_vram_used_gb": round(used, 2),
-                "gpu_vram_total_gb": round(total, 2),
+                "gpu_vram_total_gb": total_display,
                 "gpu_vram_pct": round(pct, 1),
             }
     except Exception:
