@@ -250,13 +250,16 @@ async function startAnalysis() {
   const fileInput = document.getElementById('file-input');
   const folderInput = document.getElementById('folder-input');
   
-  // Use whichever input has files
   let activeInput = fileInput.files.length > 0 ? fileInput : folderInput;
   const isBatch = activeInput.files.length > 1;
 
-  if (!code && !isBatch && activeInput.files.length === 0) { showToast('Please paste or upload code first.', 'error'); return; }
+  if (!code && !isBatch && activeInput.files.length === 0) {
+    showToast('Please paste or upload code first.', 'error');
+    return;
+  }
 
-  document.getElementById('analyze-btn').disabled = true;
+  const analyzeBtn = document.getElementById('analyze-btn');
+  analyzeBtn.disabled = true;
   document.getElementById('status-text').textContent = 'Submitting...';
 
   const formData = new FormData();
@@ -264,7 +267,7 @@ async function startAnalysis() {
   
   if (isBatch) {
     for (let i = 0; i < activeInput.files.length; i++) {
-        formData.append('file_upload', activeInput.files[i]);
+      formData.append('file_upload', activeInput.files[i]);
     }
     formData.append('batch_name', document.getElementById('hidden-batch-name').value);
   } else {
@@ -272,35 +275,53 @@ async function startAnalysis() {
   }
 
   try {
+    // Send as AJAX — backend will return JSON {hash, status} immediately
     const resp = await fetch("{% url 'submissions:submit' %}", {
       method: 'POST',
       body: formData,
-      redirect: 'manual',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
     });
 
-    const location = resp.headers.get('location') || resp.url;
-    
-    // Check if it's a batch result redirect
-    if (location.includes('/batch/')) {
-        window.location.href = location;
-        return;
+    if (!resp.ok) {
+      // HTTP error (400, 500, etc.)
+      const data = await resp.json().catch(() => ({}));
+      showToast(data.error || `Server error (${resp.status})`, 'error');
+      analyzeBtn.disabled = false;
+      document.getElementById('status-text').textContent = 'Error — try again';
+      return;
     }
 
-    const hashMatch = location.match(/result\/([a-f0-9]{64})\//);
+    const data = await resp.json();
 
-    if (hashMatch) {
-      currentCodeHash = hashMatch[1];
-      if (resp.type === 'opaqueredirect' || resp.status === 0) {
-        window.location.href = location;
-        return;
-      }
-      startSSEStream(currentCodeHash);
-    } else {
-      window.location.href = location || '/';
+    // Batch redirect
+    if (data.redirect) {
+      window.location.href = data.redirect;
+      return;
     }
+
+    const codeHash = data.hash;
+    if (!codeHash) {
+      showToast('Unexpected response from server.', 'error');
+      analyzeBtn.disabled = false;
+      document.getElementById('status-text').textContent = 'Error — try again';
+      return;
+    }
+
+    currentCodeHash = codeHash;
+
+    // If cached result already exists → go straight to result page
+    if (data.status === 'cached') {
+      document.getElementById('status-text').textContent = 'Cached result found, redirecting...';
+      window.location.href = `/submit/result/${codeHash}/`;
+      return;
+    }
+
+    // New submission → show SSE progress overlay
+    startSSEStream(codeHash);
+
   } catch (err) {
     showToast('Network error: ' + err.message, 'error');
-    document.getElementById('analyze-btn').disabled = false;
+    analyzeBtn.disabled = false;
     document.getElementById('status-text').textContent = 'Error — try again';
   }
 }

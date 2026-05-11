@@ -252,24 +252,116 @@
 {% endfor %}
 
 {% else %}
-<!-- Pending state -->
-<div class="flex items-center justify-center" style="min-height:60vh;">
-  <div class="card text-center" style="max-width:480px;padding:48px;">
-    <div class="spinner mx-auto mb-6"></div>
-    <h3 class="text-2xl font-black text-white">Processing...</h3>
-    <p class="text-sm mt-3 mb-8" style="color:#64748b;">Your submission has been received. The AI engine is analyzing the code. This page will auto-refresh when complete.</p>
+<!-- ══ PENDING / WAITING STATE ═══════════════════════════════════════ -->
+<div class="flex items-center justify-center animate-slide-up" style="min-height:70vh;">
+  <div class="text-center" style="max-width:520px;">
+
+    <!-- Animated ring -->
+    <div class="relative flex justify-center mb-10">
+      <div style="width:96px;height:96px;border-radius:50%;border:3px solid rgba(255,255,255,0.05);border-top-color:#22d3ee;animation:spin-ring 0.9s linear infinite;"></div>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+        <svg class="w-8 h-8" style="color:#22d3ee;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg>
+      </div>
+    </div>
+
+    <p class="text-xs font-black uppercase tracking-widest mb-2" style="color:#22d3ee;">AI Engine Running</p>
+    <h3 class="text-3xl font-black text-white mb-3">Analyzing Code...</h3>
+    <p class="text-sm mb-8" style="color:#64748b;">
+      The hybrid AI model is processing your submission.<br>
+      This page will update automatically when complete.
+    </p>
+
+    <!-- Progress bar (indeterminate) -->
+    <div class="progress-track mb-6" style="height:4px;max-width:360px;margin:0 auto 24px;">
+      <div id="pending-bar" class="progress-fill" style="width:0%;transition:width 0.5s ease;"></div>
+    </div>
+
+    <!-- Step labels -->
+    <div class="flex justify-between text-xs font-bold uppercase tracking-widest mb-8" style="color:#334155;max-width:360px;margin:0 auto 32px;">
+      <span id="ps-router">① Router</span>
+      <span id="ps-analyzer">② Analyzer</span>
+      <span id="ps-judge">③ Judge</span>
+      <span id="ps-critique">④ XAI</span>
+    </div>
+
+    <!-- Status text -->
+    <p id="pending-status" class="text-xs font-bold mb-6" style="color:#475569;">Waiting for result...</p>
+
+    <!-- Manual refresh button (fallback) -->
     <a href="{% url 'submissions:result' code_hash=submission.code_hash %}"
-       class="btn btn-primary" style="border-radius:16px;">
-      Refresh Results
+       class="btn btn-ghost text-xs" style="border-radius:14px;padding:10px 20px;">
+      ↻ Refresh manually
     </a>
   </div>
 </div>
+
 <script>
-    setTimeout(() => {
-        window.location.reload();
-    }, 3000);
+(function() {
+  const codeHash = '{{ submission.code_hash }}';
+  const resultUrl = '/submit/result/' + codeHash + '/';
+  const statusEl = document.getElementById('pending-status');
+  const bar = document.getElementById('pending-bar');
+
+  // Animate bar slowly up to 85% (indeterminate feel)
+  let barVal = 5;
+  const barInterval = setInterval(() => {
+    barVal = Math.min(85, barVal + (Math.random() * 2));
+    bar.style.width = barVal + '%';
+  }, 800);
+
+  // Step cycling animation
+  const steps = ['ps-router', 'ps-analyzer', 'ps-judge', 'ps-critique'];
+  let stepIdx = 0;
+  const stepInterval = setInterval(() => {
+    steps.forEach(id => document.getElementById(id).style.color = '#334155');
+    document.getElementById(steps[stepIdx]).style.color = '#22d3ee';
+    stepIdx = (stepIdx + 1) % steps.length;
+  }, 2000);
+
+  // Smart polling: check if result is ready, then reload only once
+  let pollCount = 0;
+  const maxPolls = 90; // 90 × 2s = 3 minutes timeout
+  const pollInterval = setInterval(async () => {
+    pollCount++;
+    if (pollCount > maxPolls) {
+      clearInterval(pollInterval);
+      clearInterval(barInterval);
+      clearInterval(stepInterval);
+      statusEl.textContent = 'Analysis taking longer than expected. Please refresh manually.';
+      statusEl.style.color = '#f87171';
+      return;
+    }
+
+    try {
+      // Use a lightweight HEAD/fetch to check if result_json is populated
+      const resp = await fetch('/submit/api/status/' + codeHash + '/', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.ready) {
+          // Result is ready → stop polling and navigate
+          clearInterval(pollInterval);
+          clearInterval(barInterval);
+          clearInterval(stepInterval);
+          bar.style.width = '100%';
+          statusEl.textContent = '✓ Analysis complete! Loading results...';
+          statusEl.style.color = '#4ade80';
+          setTimeout(() => { window.location.reload(); }, 500);
+        } else {
+          statusEl.textContent = `Checking... (${pollCount}s)`;
+        }
+      }
+    } catch (e) {
+      // Network error — keep polling silently
+    }
+  }, 2000);
+})();
 </script>
 {% endif %}
+
 {% endblock %}
 
 {% block extra_js %}

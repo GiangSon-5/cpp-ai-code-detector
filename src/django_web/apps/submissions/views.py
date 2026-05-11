@@ -39,6 +39,8 @@ def submit_view(request):
         uploaded_files = request.FILES.getlist("file_upload")
         ai_url = "http://127.0.0.1:8001"
         repo = BronzeRepository()
+        # Detect AJAX request — JS frontend sends this header
+        is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
         # --- BATCH UPLOAD (Multiple files) ---
         if len(uploaded_files) > 1:
@@ -75,12 +77,16 @@ def submit_view(request):
             
             threading.Thread(target=_process_batch, args=(batch.id,)).start()
             messages.success(request, f"Đã tải lên {len(uploaded_files)} files. Đang xử lý nền...")
+            if is_ajax:
+                return JsonResponse({"batch_id": batch.id, "redirect": f"/submit/batch/{batch.id}/"})
             return redirect("submissions:batch_result", batch_id=batch.id)
 
         # --- SINGLE UPLOAD ---
         if uploaded_files:
             uploaded_file = uploaded_files[0]
             if uploaded_file.size > MAX_CODE_SIZE:
+                if is_ajax:
+                    return JsonResponse({"error": f"File quá lớn ({uploaded_file.size / 1024:.0f}KB). Giới hạn 500KB."}, status=400)
                 messages.error(request, f"File quá lớn ({uploaded_file.size / 1024:.0f}KB). Giới hạn 500KB.")
                 logger.warning(
                     module="submissions.views",
@@ -94,6 +100,8 @@ def submit_view(request):
                 filename = uploaded_file.name
                 source = "file_upload"
             except UnicodeDecodeError:
+                if is_ajax:
+                    return JsonResponse({"error": "File không phải text UTF-8."}, status=400)
                 messages.error(request, "File không phải text UTF-8.")
                 return render(request, "submissions/submit.html")
         else:
@@ -103,6 +111,8 @@ def submit_view(request):
 
         # Validate
         if not raw_code.strip():
+            if is_ajax:
+                return JsonResponse({"error": "Vui lòng nhập code hoặc upload file."}, status=400)
             messages.error(request, "Vui lòng nhập code hoặc upload file.")
             logger.warning(
                 module="submissions.views",
@@ -113,6 +123,8 @@ def submit_view(request):
             return render(request, "submissions/submit.html")
 
         if len(raw_code.encode("utf-8")) > MAX_CODE_SIZE:
+            if is_ajax:
+                return JsonResponse({"error": "Code quá lớn. Giới hạn 500KB."}, status=400)
             messages.error(request, "Code quá lớn. Giới hạn 500KB.")
             return render(request, "submissions/submit.html")
 
@@ -124,7 +136,7 @@ def submit_view(request):
             filename=filename
         )
 
-        # If duplicate with existing result → show cached
+        # If duplicate with existing result → show cached result immediately
         if not created and submission.result_json:
             logger.info(
                 module="submissions.views",
@@ -132,9 +144,21 @@ def submit_view(request):
                 message=f"Duplicate submission, showing cached result for {submission.code_hash[:12]}",
                 latency_ms=(time.perf_counter() - t0) * 1000,
             )
+            if is_ajax:
+                return JsonResponse({"hash": submission.code_hash, "status": "cached"})
             return redirect("submissions:result", code_hash=submission.code_hash)
 
-        # Forward to FastAPI AI Service (Local Orchestrator)
+        # ── AJAX path: return hash immediately, SSE will handle analysis ──
+        if is_ajax:
+            logger.info(
+                module="submissions.views",
+                function="submit_view",
+                message=f"AJAX submit: returning hash {submission.code_hash[:12]} for SSE analysis",
+                latency_ms=(time.perf_counter() - t0) * 1000,
+            )
+            return JsonResponse({"hash": submission.code_hash, "status": "pending"})
+
+        # ── Fallback sync path (non-AJAX, e.g. direct form submit) ──
         try:
             code_base64 = base64.b64encode(raw_code.encode("utf-8")).decode("ascii")
             # Django calls the local brain, local brain calls Colab
@@ -280,6 +304,17 @@ def batch_result_view(request, batch_id):
             "human_count": human_count,
             "pending": pending,
         }
+    })
+
+
+@login_required
+def status_api_view(request, code_hash):
+    """Lightweight JSON endpoint for polling analysis status from result page."""
+    submission = get_object_or_404(BronzeSubmission, code_hash=code_hash)
+    ready = bool(submission.result_json)
+    return JsonResponse({
+        "ready": ready,
+        "prediction": submission.prediction if ready else None,
     })
 
 
