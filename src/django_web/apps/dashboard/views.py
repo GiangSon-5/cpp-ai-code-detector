@@ -191,44 +191,155 @@ def metrics_api_view(request):
 
 @staff_member_required
 def metrics_view(request):
-    """Observability stack — Chart.js panels."""
+    """Observability stack — real data from DB + FastAPI health."""
     t0 = time.perf_counter()
+    from django.utils import timezone
+    from datetime import timedelta
+    import json
 
-    global_total = BronzeSubmission.objects.count()
-    global_ai = BronzeSubmission.objects.filter(prediction="AI GENERATED").count()
-    global_human = BronzeSubmission.objects.filter(prediction="HUMAN WRITTEN").count()
+    # ── Basic counts ─────────────────────────────────────────────
+    total = BronzeSubmission.objects.count()
+    ai_count = BronzeSubmission.objects.filter(prediction="AI GENERATED").count()
+    human_count = BronzeSubmission.objects.filter(prediction="HUMAN WRITTEN").count()
+    pending = BronzeSubmission.objects.filter(prediction="").count()
     avg_conf = (
         BronzeSubmission.objects.filter(confidence__isnull=False)
         .aggregate(avg=Avg("confidence"))["avg"] or 0.0
     )
 
-    # Build confidence distribution buckets (0-10, 10-20, ..., 90-100)
+    # ── Confidence histogram (10 buckets × 10%) ──────────────────
     conf_data = []
     for i in range(10):
         low, high = i / 10, (i + 1) / 10
         count = BronzeSubmission.objects.filter(
-            confidence__gte=low, confidence__lt=high
+            confidence__gte=low, confidence__lt=high if i < 9 else 1.0001
         ).count()
         conf_data.append(count)
+    conf_labels = [f"{i*10}–{(i+1)*10}%" for i in range(10)]
+
+    # ── AI vs Human per day — last 7 days ────────────────────────
+    now = timezone.now()
+    daily_ai = []
+    daily_human = []
+    daily_labels = []
+    for d in range(6, -1, -1):
+        day_start = (now - timedelta(days=d)).replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end   = day_start + timedelta(days=1)
+        day_ai = BronzeSubmission.objects.filter(
+            timestamp__gte=day_start, timestamp__lt=day_end,
+            prediction="AI GENERATED"
+        ).count()
+        day_hm = BronzeSubmission.objects.filter(
+            timestamp__gte=day_start, timestamp__lt=day_end,
+            prediction="HUMAN WRITTEN"
+        ).count()
+        daily_ai.append(day_ai)
+        daily_human.append(day_hm)
+        daily_labels.append((now - timedelta(days=d)).strftime("%d/%m"))
+
+    # ── Model usage (OOP vs NORMAL) from result_json ──────────────
+    oop_count = 0
+    normal_count = 0
+    dl_scores = []
+    ml_scores = []
+    hybrid_scores = []
+
+    recent_results = BronzeSubmission.objects.filter(
+        result_json__isnull=False
+    ).exclude(result_json={})
+
+    for sub in recent_results:
+        rj = sub.result_json or {}
+        model = rj.get("model_used", "")
+        if "OOP" in model:
+            oop_count += 1
+        elif "Normal" in model or "NORMAL" in model:
+            normal_count += 1
+        if rj.get("dl_score") is not None:
+            dl_scores.append(rj["dl_score"])
+        if rj.get("ml_score") is not None:
+            ml_scores.append(rj["ml_score"])
+        if rj.get("hybrid_score") is not None:
+            hybrid_scores.append(rj["hybrid_score"])
+
+    avg_dl = round(sum(dl_scores) / len(dl_scores) * 100, 1) if dl_scores else None
+    avg_ml = round(sum(ml_scores) / len(ml_scores) * 100, 1) if ml_scores else None
+    avg_hybrid = round(sum(hybrid_scores) / len(hybrid_scores) * 100, 1) if hybrid_scores else None
+
+    # ── Cache hit rate: duplicate hashes submitted more than once ─
+    from django.db.models import Count as _Count
+    dup_hashes = (
+        BronzeSubmission.objects
+        .values("code_hash")
+        .annotate(cnt=_Count("id"))
+        .filter(cnt__gt=1)
+        .count()
+    )
+    cache_hit_rate = round(dup_hashes / total * 100, 1) if total > 0 else 0
+
+    # ── Source breakdown (pasted vs file_upload vs batch) ─────────
+    pasted = BronzeSubmission.objects.filter(source="pasted_code").count()
+    file_up = BronzeSubmission.objects.filter(source="file_upload").count()
+    batch = BronzeSubmission.objects.filter(source="batch").count()
+
+    # ── Recent error submissions (pending > 10min) ────────────────
+    stale_cutoff = now - timedelta(minutes=10)
+    stale_pending = BronzeSubmission.objects.filter(
+        prediction="", timestamp__lt=stale_cutoff
+    ).count()
+
+    # ── FastAPI health ────────────────────────────────────────────
+    fastapi_health: dict = {}
+    try:
+        import httpx as _httpx
+        with _httpx.Client(timeout=2.0) as client:
+            resp = client.get("http://localhost:8001/health")
+            if resp.status_code == 200:
+                fastapi_health = resp.json()
+    except Exception:
+        pass
 
     context = {
         "active_nav": "metrics",
         "global_stats": {
-            "total": global_total,
-            "ai_count": global_ai,
-            "human_count": global_human,
+            "total": total,
+            "ai_count": ai_count,
+            "human_count": human_count,
+            "pending": pending,
             "avg_confidence": round(float(avg_conf), 4),
+            "avg_confidence_pct": round(float(avg_conf) * 100, 1),
         },
-        "metrics": {
-            "gpu_vram_gb": 0,
-            "cache_hit_rate": 0,
-            "inference_p95_ms": "—",
-        },
-        "conf_data": conf_data,
-        "conf_labels": [f"{i*10}-{(i+1)*10}" for i in range(10)],
-        "latency_buckets": [2, 8, 15, 10, 4, 1],  # static demo
-        "cache_by_day": [20, 35, 28, 45, 23, 18, 30],
-        "recent_logs": [],
+        # Histogram
+        "conf_data_json": json.dumps(conf_data),
+        "conf_labels_json": json.dumps(conf_labels),
+        # Daily trend
+        "daily_ai_json": json.dumps(daily_ai),
+        "daily_human_json": json.dumps(daily_human),
+        "daily_labels_json": json.dumps(daily_labels),
+        # Model breakdown
+        "oop_count": oop_count,
+        "normal_count": normal_count,
+        "model_total": oop_count + normal_count,
+        # Per-model scores
+        "avg_dl": avg_dl,
+        "avg_ml": avg_ml,
+        "avg_hybrid": avg_hybrid,
+        # Cache
+        "cache_hit_rate": cache_hit_rate,
+        "dup_hashes": dup_hashes,
+        # Source breakdown
+        "src_pasted": pasted,
+        "src_file": file_up,
+        "src_batch": batch,
+        "src_json": json.dumps([pasted, file_up, batch]),
+        # Health
+        "stale_pending": stale_pending,
+        "fastapi_health": fastapi_health,
+        "inference_p95_ms": fastapi_health.get("p95_latency_ms"),
+        "gpu_vram_used": fastapi_health.get("gpu_vram_used_gb", 0),
+        "gpu_vram_total": fastapi_health.get("gpu_vram_total_gb", 4),
+        "gpu_vram_pct": fastapi_health.get("gpu_vram_pct", 0),
+        "request_count": fastapi_health.get("request_count", 0),
     }
 
     logger.info(
@@ -238,6 +349,7 @@ def metrics_view(request):
         latency_ms=(time.perf_counter() - t0) * 1000,
     )
     return render(request, "dashboard/metrics.html", context)
+
 
 
 # ──────────────────────────────────────────────────────────────────────────────
