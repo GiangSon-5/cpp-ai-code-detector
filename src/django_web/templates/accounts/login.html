@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Sign In — CodeGuard AI{% endblock %}
+{% block main_class %}flex items-center justify-center p-8{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-md animate-slide-up">
+
+  <!-- Logo header -->
+  <div class="text-center mb-10">
+    <div class="inline-flex w-16 h-16 rounded-2xl items-center justify-center mb-5 shadow-lg"
+      style="background:linear-gradient(135deg,#22d3ee,#3b82f6);box-shadow:0 0 30px rgba(34,211,238,0.25);">
+      <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    </div>
+    <h1 class="text-3xl font-black text-white">Welcome back</h1>
+    <p class="mt-2 text-sm" style="color:#64748b;">Sign in to CodeGuard AI</p>
+  </div>
+
+  <!-- Card -->
+  <div class="card" style="border-radius:28px;padding:36px 40px;">
+    <form method="post" id="login-form" class="space-y-5">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="alert alert-error">
+        <span>{{ form.non_field_errors.0 }}</span>
+        <button type="button" class="alert-close" onclick="this.parentElement.remove()">✕</button>
+      </div>
+      {% endif %}
+
+      <!-- Username -->
+      <div class="space-y-2">
+        <label for="id_username" class="block text-xs font-black uppercase tracking-widest"
+          style="color:#64748b;">Username</label>
+        <input type="text" id="id_username" name="username" autocomplete="username" autofocus class="input-dark"
+          placeholder="your_username" value="{{ form.username.value|default:'' }}">
+        {% if form.username.errors %}
+        <p class="text-xs" style="color:#f87171;">{{ form.username.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Password -->
+      <div class="space-y-2">
+        <label for="id_password" class="block text-xs font-black uppercase tracking-widest"
+          style="color:#64748b;">Password</label>
+        <div class="relative">
+          <input type="password" id="id_password" name="password" autocomplete="current-password"
+            class="input-dark pr-12" placeholder="••••••••">
+          <button type="button" id="toggle-pw" class="absolute right-4 top-1/2 -translate-y-1/2 transition-opacity"
+            style="background:none;border:none;cursor:pointer;color:#64748b;" onclick="togglePassword()">
+            <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </button>
+        </div>
+        {% if form.password.errors %}
+        <p class="text-xs" style="color:#f87171;">{{ form.password.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" id="login-btn" class="btn btn-primary w-full mt-2" style="border-radius:16px;padding:16px;">
+        Sign In
+      </button>
+    </form>
+
+    <!-- Divider -->
+    <div class="flex items-center gap-4 my-6">
+      <div class="flex-1 h-px" style="background:rgba(255,255,255,0.06);"></div>
+      <span class="text-xs font-bold uppercase tracking-widest" style="color:#475569;">or</span>
+      <div class="flex-1 h-px" style="background:rgba(255,255,255,0.06);"></div>
+    </div>
+
+    <p class="text-center text-sm" style="color:#64748b;">
+      Don't have an account?
+      <a href="{% url 'accounts:register' %}" class="font-bold" style="color:#22d3ee;">Create one</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function togglePassword() {
+    const input = document.getElementById('id_password');
+    input.type = input.type === 'password' ? 'text' : 'password';
+  }
+  document.getElementById('login-form').addEventListener('submit', function () {
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span> Signing in...';
+  });
+</script>
+{% endblock %}

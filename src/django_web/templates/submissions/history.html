@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Analysis Vault — CodeGuard AI{% endblock %}
+{% block main_class %}{% endblock %}
+
+{% block content %}
+<div class="animate-slide-up">
+
+  <!-- Header -->
+  <div class="flex justify-between items-end mb-8">
+    <div>
+      <h2 class="text-4xl font-black text-white">Analysis Vault</h2>
+      <p class="text-sm mt-2" style="color:#64748b;">Your complete history of code analysis submissions</p>
+    </div>
+    <a href="{% url 'submissions:submit' %}" class="btn btn-primary" style="border-radius:16px;">
+      + New Analysis
+    </a>
+  </div>
+
+  <!-- Search & Tabs -->
+  <div class="flex justify-between items-center mb-6">
+    <div class="relative w-64">
+      <svg class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4" style="color:#64748b;" fill="none"
+        stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input type="text" id="search-input" class="input-dark pl-12 w-full" style="border-radius:16px;"
+        placeholder="Search..." oninput="filterTable(this.value)">
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex bg-gray-900 rounded-xl p-1" style="background:rgba(255,255,255,0.05);">
+      <button onclick="switchTab('single')" id="tab-single"
+        class="px-4 py-2 text-sm font-bold rounded-lg bg-gray-800 text-white shadow-sm"
+        style="background:rgba(34,211,238,0.1); color:#22d3ee;">Single Uploads</button>
+      <button onclick="switchTab('batch')" id="tab-batch"
+        class="px-4 py-2 text-sm font-bold rounded-lg text-gray-400 hover:text-white transition-colors">Batch
+        Uploads</button>
+    </div>
+  </div>
+
+  <!-- Table card -->
+  <div class="glass overflow-hidden" style="border-radius:28px;">
+
+    <!-- Single Uploads Tab -->
+    <div id="single-view">
+      {% if submissions %}
+      <div class="overflow-x-auto">
+        <table class="data-table" id="submissions-table">
+          <thead>
+            <tr style="background:rgba(255,255,255,0.02);">
+              <th style="padding:20px 24px 16px;">Submission</th>
+              <th style="padding:20px 16px 16px;">Analysis ID</th>
+              <th style="padding:20px 16px 16px;">AI Score</th>
+              <th style="padding:20px 16px 16px;">Verdict</th>
+              <th style="padding:20px 16px 16px;">Date</th>
+              <th style="padding:20px 16px 16px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in submissions %}
+            <tr class="submission-row single-row"
+              data-search="{{ sub.code_hash }} {{ sub.prediction }} {{ sub.filename }}"
+              onclick="window.location='{% url 'submissions:result' code_hash=sub.code_hash %}'"
+              style="cursor:pointer;">
+              <td style="padding:22px 24px;">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style="background:{% if sub.prediction == 'AI GENERATED' %}rgba(248,113,113,0.1){% elif sub.prediction == 'HUMAN WRITTEN' %}rgba(74,222,128,0.1){% else %}rgba(255,255,255,0.05){% endif %};">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      style="color:{% if sub.prediction == 'AI GENERATED' %}#f87171{% elif sub.prediction == 'HUMAN WRITTEN' %}#4ade80{% else %}#64748b{% endif %};">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-bold text-white">{{ sub.filename|default:sub.source }}</p>
+                    <p class="text-xs" style="color:#64748b;">{{ sub.file_size_bytes|filesizeformat }}</p>
+                  </div>
+                </div>
+              </td>
+              <td style="padding:22px 16px;">
+                <code class="text-xs font-mono"
+                  style="color:#64748b;letter-spacing:0.05em;">{{ sub.code_hash|slice:":16" }}...</code>
+              </td>
+              <td style="padding:22px 16px;">
+                {% if sub.confidence is not None %}
+                <div class="flex items-center gap-3">
+                  <span class="w-2 h-2 rounded-full flex-shrink-0"
+                    style="background:{% if sub.confidence > 0.7 %}#f87171{% elif sub.confidence > 0.4 %}#fb923c{% else %}#4ade80{% endif %};box-shadow:0 0 8px {% if sub.confidence > 0.7 %}rgba(248,113,113,0.4){% elif sub.confidence > 0.4 %}rgba(251,146,60,0.4){% else %}rgba(74,222,128,0.4){% endif %};"></span>
+                  <span class="text-sm font-bold text-white">{{ sub.confidence|floatformat:4 }}</span>
+                </div>
+                {% else %}
+                <span class="text-sm" style="color:#475569;">—</span>
+                {% endif %}
+              </td>
+              <td style="padding:22px 16px;">
+                {% if sub.prediction == 'AI GENERATED' %}
+                <span class="badge badge-ai">AI Generated</span>
+                {% elif sub.prediction == 'HUMAN WRITTEN' %}
+                <span class="badge badge-human">Human</span>
+                {% else %}
+                <span class="badge badge-uncertain">Pending</span>
+                {% endif %}
+              </td>
+              <td style="padding:22px 16px;">
+                <span class="text-xs font-medium" style="color:#64748b;">{{ sub.timestamp|date:"d/m/Y H:i" }}</span>
+              </td>
+              <td style="padding:22px 16px;text-align:right;" onclick="event.stopPropagation()">
+                <a href="{% url 'submissions:result' code_hash=sub.code_hash %}" class="btn btn-ghost"
+                  style="padding:8px 16px;border-radius:10px;font-size:0.65rem;">
+                  View →
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer stats -->
+      <div class="flex justify-between items-center px-8 py-5 border-t"
+        style="border-color:rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
+        <span class="text-xs font-bold" style="color:#64748b;">{{ submissions|length }} single submission{{
+          submissions|length|pluralize }}</span>
+      </div>
+
+      {% else %}
+      <div class="text-center py-20">
+        <h3 class="text-xl font-black text-white">No single submissions yet</h3>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Batch Uploads Tab -->
+    <div id="batch-view" style="display: none;">
+      {% if batch_sessions %}
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr style="background:rgba(255,255,255,0.02);">
+              <th style="padding:20px 24px 16px;">Batch Name</th>
+              <th style="padding:20px 16px 16px;">Total Files</th>
+              <th style="padding:20px 16px 16px;">Date</th>
+              <th style="padding:20px 16px 16px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for batch in batch_sessions %}
+            <tr class="submission-row batch-row" data-search="{{ batch.name }}"
+              onclick="window.location='{% url 'submissions:batch_result' batch_id=batch.id %}'"
+              style="cursor:pointer;">
+              <td style="padding:22px 24px;">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style="background:rgba(192,132,252,0.1); color:#c084fc;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-bold text-white">{{ batch.name }}</p>
+                    <p class="text-xs" style="color:#64748b;">Batch ID: {{ batch.id }}</p>
+                  </div>
+                </div>
+              </td>
+              <td style="padding:22px 16px;">
+                <span class="text-sm font-bold text-white">{{ batch.total_files }}</span>
+              </td>
+              <td style="padding:22px 16px;">
+                <span class="text-xs font-medium" style="color:#64748b;">{{ batch.timestamp|date:"d/m/Y H:i" }}</span>
+              </td>
+              <td style="padding:22px 16px;text-align:right;">
+                <a href="{% url 'submissions:batch_result' batch_id=batch.id %}" class="btn btn-ghost"
+                  style="padding:8px 16px;border-radius:10px;font-size:0.65rem;">View →</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="flex justify-between items-center px-8 py-5 border-t"
+        style="border-color:rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
+        <span class="text-xs font-bold" style="color:#64748b;">{{ batch_sessions|length }} batch{{
+          batch_sessions|length|pluralize }}</span>
+      </div>
+      {% else %}
+      <div class="text-center py-20">
+        <h3 class="text-xl font-black text-white">No batch uploads yet</h3>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let currentTab = 'single';
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('single-view').style.display = tab === 'single' ? 'block' : 'none';
+    document.getElementById('batch-view').style.display = tab === 'batch' ? 'block' : 'none';
+
+    document.getElementById('tab-single').style.background = tab === 'single' ? 'rgba(34,211,238,0.1)' : 'transparent';
+    document.getElementById('tab-single').style.color = tab === 'single' ? '#22d3ee' : '#9ca3af';
+
+    document.getElementById('tab-batch').style.background = tab === 'batch' ? 'rgba(192,132,252,0.1)' : 'transparent';
+    document.getElementById('tab-batch').style.color = tab === 'batch' ? '#c084fc' : '#9ca3af';
+  }
+
+  function filterTable(query) {
+    const q = query.toLowerCase();
+    const selector = currentTab === 'single' ? '.single-row' : '.batch-row';
+    document.querySelectorAll(selector).forEach(row => {
+      const text = row.dataset.search.toLowerCase();
+      row.style.display = text.includes(q) ? '' : 'none';
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Settings — CodeGuard AI{% endblock %}
+{% block main_class %}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto animate-slide-up">
+
+  <div class="mb-8">
+    <h2 class="text-4xl font-black text-white">Settings</h2>
+    <p class="text-sm mt-2" style="color:#64748b;">Manage your profile and preferences</p>
+  </div>
+
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    <!-- Profile Information -->
+    <div class="card" style="border-radius:24px;padding:32px;">
+      <h3 class="text-xs font-black uppercase tracking-widest mb-6" style="color:#22d3ee;">Profile Information</h3>
+
+      <div class="flex items-center gap-6 mb-8">
+        <div class="w-20 h-20 rounded-2xl border-2 flex items-center justify-center text-3xl font-black"
+          style="border-color:#334155;background:linear-gradient(135deg,rgba(34,211,238,0.1),rgba(59,130,246,0.1));color:#22d3ee;">
+          {{ user.username|slice:":1"|upper }}
+        </div>
+        <div>
+          <p class="text-xl font-black text-white">{{ user.username }}</p>
+          <p class="text-sm" style="color:#64748b;">{{ user.email|default:"No email set" }}</p>
+          <p class="text-xs mt-1" style="color:#475569;">Member since {{ user.date_joined|date:"M Y" }}</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-5">
+        <div class="space-y-2">
+          <label class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">First Name</label>
+          <input type="text" name="first_name" class="input-dark" value="{{ user.first_name }}">
+        </div>
+        <div class="space-y-2">
+          <label class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Last Name</label>
+          <input type="text" name="last_name" class="input-dark" value="{{ user.last_name }}">
+        </div>
+        <div class="col-span-2 space-y-2">
+          <label class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Email Address</label>
+          <input type="email" name="email" class="input-dark" value="{{ user.email }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Security -->
+    <div class="card" style="border-radius:24px;padding:32px;">
+      <h3 class="text-xs font-black uppercase tracking-widest mb-6" style="color:#22d3ee;">Security</h3>
+      <div class="space-y-5">
+        <div class="space-y-2">
+          <label class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Current
+            Password</label>
+          <input type="password" name="old_password" class="input-dark" placeholder="••••••••"
+            autocomplete="current-password">
+        </div>
+        <div class="grid grid-cols-2 gap-5">
+          <div class="space-y-2">
+            <label class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">New
+              Password</label>
+            <input type="password" name="new_password1" class="input-dark" placeholder="••••••••"
+              autocomplete="new-password">
+          </div>
+          <div class="space-y-2">
+            <label class="block text-xs font-black uppercase tracking-widest" style="color:#64748b;">Confirm New</label>
+            <input type="password" name="new_password2" class="input-dark" placeholder="••••••••"
+              autocomplete="new-password">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preferences -->
+    <div class="card" style="border-radius:24px;padding:32px;">
+      <h3 class="text-xs font-black uppercase tracking-widest mb-6" style="color:#22d3ee;">System Preferences</h3>
+      <div class="space-y-5">
+        <div class="flex justify-between items-center py-4 border-b" style="border-color:rgba(255,255,255,0.05);">
+          <div>
+            <p class="text-sm font-bold text-white">Email Notifications</p>
+            <p class="text-xs mt-1" style="color:#64748b;">Receive alerts when analysis completes</p>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" name="email_notify" checked>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="flex justify-between items-center py-4">
+          <div>
+            <p class="text-sm font-bold text-white">High Contrast Mode</p>
+            <p class="text-xs mt-1" style="color:#64748b;">Increase accessibility contrast</p>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" name="high_contrast">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-4 justify-end">
+      <button type="button" onclick="history.back()" class="btn btn-ghost" style="border-radius:14px;">
+        Discard
+      </button>
+      <button type="submit" class="btn btn-primary" style="border-radius:14px;">
+        Save Changes
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "base_admin.html" %}
+{% block title %}Model Registry — CodeGuard AI{% endblock %}
+
+{% block content %}
+
+<div>
+  <p class="text-xs font-black uppercase tracking-widest" style="color:#c084fc;">Model Registry</p>
+  <h1 class="text-3xl font-black text-white">ML Model Hub</h1>
+</div>
+
+<!-- Active model + Colab training row -->
+<div class="grid grid-cols-2 gap-6">
+
+  <!-- Active Model -->
+  <div class="glass rounded-3xl p-8" style="border-color:rgba(192,132,252,0.15);">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <p class="text-xs font-black uppercase tracking-widest mb-2" style="color:#64748b;">Active Production Model</p>
+        <h2 class="text-2xl font-black text-white">Hybrid Fusion V8</h2>
+        <p class="text-sm mt-1" style="color:#64748b;">RoBERTa Ensemble + Qwen 2.5 LLM Judge</p>
+      </div>
+      <span class="badge badge-human" style="padding:8px 14px;">Production</span>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="rounded-2xl p-4" style="background:rgba(255,255,255,0.03);">
+        <p class="text-xs font-black uppercase tracking-widest" style="color:#64748b;">Alpha (α)</p>
+        <p class="text-xl font-black text-white mt-1">{{ active_model.alpha|default:"0.48" }}</p>
+      </div>
+      <div class="rounded-2xl p-4" style="background:rgba(255,255,255,0.03);">
+        <p class="text-xs font-black uppercase tracking-widest" style="color:#64748b;">Threshold</p>
+        <p class="text-xl font-black text-white mt-1">{{ active_model.threshold|default:"0.5" }}</p>
+      </div>
+      <div class="rounded-2xl p-4" style="background:rgba(255,255,255,0.03);">
+        <p class="text-xs font-black uppercase tracking-widest" style="color:#64748b;">Val Accuracy</p>
+        <p class="text-xl font-black" style="color:#4ade80;margin-top:4px;">{{ active_model.val_accuracy|default:"92.4%" }}</p>
+      </div>
+    </div>
+
+    <!-- Components -->
+    <div class="space-y-3">
+      <div class="flex justify-between items-center py-3 border-b" style="border-color:rgba(255,255,255,0.05);">
+        <div class="flex items-center gap-3">
+          <span class="badge badge-oop" style="font-size:0.6rem;">NLP</span>
+          <span class="text-sm font-bold text-white">RoBERTa-base (OOP Model)</span>
+        </div>
+        <span class="text-xs font-bold" style="color:#4ade80;">✓ Loaded</span>
+      </div>
+      <div class="flex justify-between items-center py-3 border-b" style="border-color:rgba(255,255,255,0.05);">
+        <div class="flex items-center gap-3">
+          <span class="badge badge-ai" style="font-size:0.6rem;">NLP</span>
+          <span class="text-sm font-bold text-white">RoBERTa-base (Normal Model)</span>
+        </div>
+        <span class="text-xs font-bold" style="color:#4ade80;">✓ Loaded</span>
+      </div>
+      <div class="flex justify-between items-center py-3">
+        <div class="flex items-center gap-3">
+          <span class="badge badge-uncertain" style="font-size:0.6rem;">LLM</span>
+          <span class="text-sm font-bold text-white">Qwen 2.5-7B-Instruct</span>
+        </div>
+        <span class="text-xs font-bold" style="color:#22d3ee;">Colab (ngrok)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Colab Training status -->
+  <div class="glass rounded-3xl p-8" style="border-color:rgba(34,211,238,0.1);">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <p class="text-xs font-black uppercase tracking-widest mb-2" style="color:#64748b;">Training Environment</p>
+        <h2 class="text-2xl font-black text-white">Google Colab GPU</h2>
+        <p class="text-sm mt-1" style="color:#64748b;">T4 / A100 — via ngrok tunnel</p>
+      </div>
+      <div class="flex items-center gap-2 px-4 py-2 rounded-xl"
+        style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);">
+        <span class="status-dot warning"></span>
+        <span class="text-xs font-black" style="color:#fbbf24;">Standby</span>
+      </div>
+    </div>
+
+    <!-- VRAM gauge -->
+    <div class="mb-6">
+      <div class="flex justify-between mb-3">
+        <p class="text-xs font-black uppercase tracking-widest" style="color:#64748b;">VRAM Utilization</p>
+        <p class="text-xs font-black" style="color:#fbbf24;">{{ colab_vram|default:"0" }} / 16 GB</p>
+      </div>
+      <div class="progress-track" style="height:8px;">
+        <div class="progress-fill"
+          style="width:{% widthratio colab_vram|default:0 16 100 %}%;background:linear-gradient(90deg,#22d3ee,#fbbf24);">
+        </div>
+      </div>
+    </div>
+
+    <!-- Ngrok info -->
+    <div class="rounded-2xl p-5" style="background:rgba(0,0,0,0.3);">
+      <p class="text-xs font-black uppercase tracking-widest mb-3" style="color:#64748b;">Tunnel Configuration</p>
+      <code class="text-xs" style="color:#22d3ee;word-break:break-all;">
+        {{ fastapi_url|default:"http://localhost:8001" }}/api/analyze_stream
+      </code>
+    </div>
+  </div>
+</div>
+
+<!-- Optimization History -->
+<div class="glass rounded-3xl overflow-hidden">
+  <div class="px-8 py-6 border-b" style="border-color:rgba(255,255,255,0.05);">
+    <h3 class="text-xs font-black uppercase tracking-widest" style="color:#c084fc;">Model Optimization History</h3>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr style="background:rgba(255,255,255,0.02);">
+        <th style="padding:16px 24px 14px;">Timestamp</th>
+        <th style="padding:16px 16px 14px;">Alpha (α)</th>
+        <th style="padding:16px 16px 14px;">Val Accuracy</th>
+        <th style="padding:16px 16px 14px;">F1 Score</th>
+        <th style="padding:16px 16px 14px;">State</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in model_history %}
+      <tr>
+        <td style="padding:18px 24px;">
+          <span class="text-xs font-mono" style="color:#64748b;">{{ run.timestamp|date:"d/m/y H:i" }}</span>
+        </td>
+        <td style="padding:18px 16px;">
+          <code class="text-sm font-black text-white">{{ run.alpha|floatformat:4 }}</code>
+        </td>
+        <td style="padding:18px 16px;">
+          <span class="text-sm font-black" style="color:#4ade80;">{{ run.val_accuracy|floatformat:4 }}</span>
+        </td>
+        <td style="padding:18px 16px;">
+          <span class="text-sm font-black" style="color:#22d3ee;">{{ run.f1_score|floatformat:4 }}</span>
+        </td>
+        <td style="padding:18px 16px;">
+          <span
+            class="badge {% if run.registry_state == 'production' %}badge-human{% else %}badge-uncertain{% endif %}">
+            {{ run.registry_state|default:"archived" }}
+          </span>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" style="padding:40px;text-align:center;color:#475569;">No model runs recorded yet</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

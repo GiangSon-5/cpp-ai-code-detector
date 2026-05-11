@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History - AI Code Detector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #0b0f1a; color: #e2e8f0; }
+        .glass { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
+    </style>
+</head>
+<body class="h-screen flex flex-col p-8 space-y-8 overflow-hidden">
+
+    <!-- Navigation Header -->
+    <header class="flex justify-between items-center px-4">
+        <div class="flex items-center space-x-4">
+            <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight">AI Code Detector <span class="text-cyan-400">AI</span></h1>
+        </div>
+        <nav class="flex space-x-12 text-sm font-bold uppercase tracking-widest text-slate-500">
+            <a href="user_input.html" class="hover:text-white transition-colors">1. Analyze</a>
+            <a href="user_analysis.html" class="hover:text-white transition-colors">2. Deep Analysis</a>
+            <a href="user_history.html" class="text-cyan-400 border-b-2 border-cyan-400 pb-2">3. History</a>
+            <a href="user_settings.html" class="hover:text-white transition-colors">Settings</a>
+        </nav>
+        <div class="flex items-center space-x-3">
+            <img src="https://i.pravatar.cc/150?u=sarah" class="w-10 h-10 rounded-full border-2 border-slate-700" alt="Sarah">
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col space-y-8 overflow-hidden">
+        
+        <!-- Header Section -->
+        <div class="flex justify-between items-end">
+            <div>
+                <h2 class="text-4xl font-black text-white leading-tight">Analysis Vault</h2>
+                <p class="text-slate-500 mt-2">Manage and review all your past C++ source code analyses.</p>
+            </div>
+            <div class="flex space-x-4">
+                <div class="glass px-6 py-3 rounded-2xl border border-white/5 flex items-center space-x-4">
+                    <input type="text" placeholder="Search by Hash or Filename..." class="bg-transparent border-none text-sm text-white focus:outline-none w-64 placeholder:text-slate-600">
+                    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Table Section -->
+        <div class="flex-1 glass rounded-[3rem] p-10 overflow-hidden flex flex-col shadow-2xl">
+            <div class="flex-1 overflow-y-auto pr-2">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-white/5">
+                            <th class="pb-6 pl-4">Filename</th>
+                            <th class="pb-6">Analysis ID (Hash)</th>
+                            <th class="pb-6 text-center">Score</th>
+                            <th class="pb-6 text-center">Result</th>
+                            <th class="pb-6 text-right pr-4">Processed Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <!-- Row 1 -->
+                        <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group cursor-pointer">
+                            <td class="py-8 pl-4 font-bold text-white">matrix_mult.cpp</td>
+                            <td class="py-8 font-mono text-xs text-slate-500 group-hover:text-cyan-400 transition-colors">a4f86b...7ebb98</td>
+                            <td class="py-8 text-center">
+                                <div class="inline-flex items-center space-x-2">
+                                    <span class="text-lg font-black text-white">95%</span>
+                                    <div class="w-1.5 h-1.5 rounded-full bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]"></div>
+                                </div>
+                            </td>
+                            <td class="py-8 text-center">
+                                <span class="px-4 py-1.5 bg-red-500/10 text-red-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-500/20">AI Generated</span>
+                            </td>
+                            <td class="py-8 text-right pr-4 text-slate-500 font-medium">Oct 29, 2026</td>
+                        </tr>
+
+                        <!-- Row 2 -->
+                        <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group cursor-pointer">
+                            <td class="py-8 pl-4 font-bold text-white">graph_lib.cpp</td>
+                            <td class="py-8 font-mono text-xs text-slate-500 group-hover:text-cyan-400 transition-colors">d0681d...6a0d01</td>
+                            <td class="py-8 text-center">
+                                <div class="inline-flex items-center space-x-2">
+                                    <span class="text-lg font-black text-white">12%</span>
+                                    <div class="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]"></div>
+                                </div>
+                            </td>
+                            <td class="py-8 text-center">
+                                <span class="px-4 py-1.5 bg-green-500/10 text-green-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-500/20">Human</span>
+                            </td>
+                            <td class="py-8 text-right pr-4 text-slate-500 font-medium">Oct 28, 2026</td>
+                        </tr>
+                        
+                        <!-- Row 3 (Corrected to AI) -->
+                        <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group cursor-pointer">
+                            <td class="py-8 pl-4 font-bold text-white">student_manager.h</td>
+                            <td class="py-8 font-mono text-xs text-slate-500 group-hover:text-cyan-400 transition-colors">b92c1a...f29103</td>
+                            <td class="py-8 text-center">
+                                <div class="inline-flex items-center space-x-2">
+                                    <span class="text-lg font-black text-white">82%</span>
+                                    <div class="w-1.5 h-1.5 rounded-full bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]"></div>
+                                </div>
+                            </td>
+                            <td class="py-8 text-center">
+                                <span class="px-4 py-1.5 bg-red-500/10 text-red-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-500/20">AI Generated</span>
+                            </td>
+                            <td class="py-8 text-right pr-4 text-slate-500 font-medium">Oct 27, 2026</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div class="mt-8 flex justify-between items-center px-4">
+                <p class="text-xs text-slate-600">Showing <b>1-10</b> of 1,240 analyses</p>
+                <div class="flex space-x-2">
+                    <button class="w-10 h-10 glass flex items-center justify-center rounded-xl text-slate-500 hover:text-white transition-all"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <button class="w-10 h-10 bg-cyan-500 flex items-center justify-center rounded-xl text-white font-bold text-xs">1</button>
+                    <button class="w-10 h-10 glass flex items-center justify-center rounded-xl text-slate-400 hover:text-white transition-all text-xs font-bold">2</button>
+                    <button class="w-10 h-10 glass flex items-center justify-center rounded-xl text-slate-500 hover:text-white transition-all"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

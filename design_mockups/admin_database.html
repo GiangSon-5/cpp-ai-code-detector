@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Explorer - System Records</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f1a;
+            color: #e2e8f0;
+        }
+
+        .glass {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(34, 211, 238, 0.3);
+        }
+    </style>
+</head>
+
+<body class="h-screen flex p-6 space-x-6 overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-20 lg:w-72 glass rounded-[3rem] flex flex-col p-8 transition-all shadow-2xl">
+        <div class="flex items-center space-x-4 px-2">
+            <div class="w-10 h-10 bg-cyan-500 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+            </div>
+            <h1 class="hidden lg:block text-xl font-black uppercase tracking-tighter">Command <span
+                    class="text-cyan-400">Center</span></h1>
+        </div>
+
+        <nav class="mt-12 flex-1 space-y-2">
+            <a href="admin_v2.html"
+                class="flex items-center space-x-4 p-4 text-slate-500 hover:text-white transition-all hover:bg-slate-800/50 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-medium">Live Monitoring</span>
+            </a>
+            <a href="admin_metrics.html"
+                class="flex items-center space-x-4 p-4 text-slate-500 hover:text-white transition-all hover:bg-slate-800/50 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-medium">Metrics & Grafana</span>
+            </a>
+            <a href="admin_infra.html"
+                class="flex items-center space-x-4 p-4 text-slate-500 hover:text-white transition-all hover:bg-slate-800/50 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-medium">Infrastructure</span>
+            </a>
+            <a href="admin_database.html"
+                class="flex items-center space-x-4 p-4 bg-indigo-500/10 text-indigo-400 rounded-2xl border border-indigo-500/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-bold">System Database</span>
+            </a>
+            <a href="admin_users.html"
+                class="flex items-center space-x-4 p-4 text-slate-500 hover:text-white transition-all hover:bg-slate-800/50 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-medium">User Management</span>
+            </a>
+            <a href="admin_models.html"
+                class="flex items-center space-x-4 p-4 text-slate-500 hover:text-white transition-all hover:bg-slate-800/50 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-medium">Model Registry</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col space-y-8 overflow-y-auto pr-4 custom-scrollbar min-h-0 pb-40">
+
+        <!-- Header -->
+        <div class="flex justify-between items-end px-4">
+            <div>
+                <h2 class="text-4xl font-black text-white leading-tight tracking-tight uppercase">Database Explorer</h2>
+                <p class="text-slate-500 mt-2">Visual access to PostgreSQL records, submission history, and system schema.</p>
+            </div>
+            <div class="flex space-x-4">
+                <div class="relative">
+                    <input type="text" placeholder="Search by Hash or MSSV..." 
+                           class="w-80 bg-slate-900/50 border border-white/10 rounded-2xl py-3 px-12 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all">
+                    <svg class="w-5 h-5 text-slate-500 absolute left-4 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <button class="px-6 py-3 bg-indigo-500 text-white font-bold rounded-2xl text-xs uppercase tracking-widest hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/20">Export CSV</button>
+            </div>
+        </div>
+
+        <!-- Database Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 px-4">
+            <div class="glass p-6 rounded-[2rem] border-l-4 border-indigo-500 bg-indigo-500/5">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Records</p>
+                <p class="text-3xl font-black text-white mt-2">14,892</p>
+                <p class="text-[10px] text-green-400 font-bold mt-1">+124 Today</p>
+            </div>
+            <div class="glass p-6 rounded-[2rem] border-l-4 border-cyan-500 bg-cyan-500/5">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">DB Size</p>
+                <p class="text-3xl font-black text-white mt-2">4.8 GB</p>
+                <p class="text-[10px] text-slate-500 font-bold mt-1">PostgreSQL v15</p>
+            </div>
+            <div class="glass p-6 rounded-[2rem] border-l-4 border-purple-500 bg-purple-500/5">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Conn</p>
+                <p class="text-3xl font-black text-white mt-2">45</p>
+                <p class="text-[10px] text-slate-500 font-bold mt-1">Peak: 82 (2h ago)</p>
+            </div>
+            <div class="glass p-6 rounded-[2rem] border-l-4 border-orange-500 bg-orange-500/5">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Latency</p>
+                <p class="text-3xl font-black text-white mt-2">12ms</p>
+                <p class="text-[10px] text-green-400 font-bold mt-1">Optimized</p>
+            </div>
+        </div>
+
+        <!-- Submissions Table -->
+        <div class="glass rounded-[3rem] p-10 flex flex-col shadow-2xl mx-4">
+            <div class="flex justify-between items-center mb-10">
+                <h3 class="text-xl font-black text-white uppercase tracking-tight">Analysis Records (Student Submissions)</h3>
+                <div class="flex space-x-2">
+                    <span class="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-slate-500 uppercase">Table: analyses_results</span>
+                </div>
+            </div>
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-white/5">
+                        <th class="pb-6 pl-4">Record ID</th>
+                        <th class="pb-6">Student MSSV</th>
+                        <th class="pb-6">Code Hash</th>
+                        <th class="pb-6 text-center">AI Score</th>
+                        <th class="pb-6">Timestamp</th>
+                        <th class="pb-6 text-right pr-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm">
+                    <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                        <td class="py-6 pl-4 font-bold text-indigo-400">#REC-9821</td>
+                        <td class="py-6 text-white font-bold">20127045</td>
+                        <td class="py-6 font-mono text-xs text-slate-500">8f2a...d3e1</td>
+                        <td class="py-6 text-center">
+                            <span class="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-black border border-green-500/20">0.02 (Human)</span>
+                        </td>
+                        <td class="py-6 text-slate-400">2026-04-29 14:20:15</td>
+                        <td class="py-6 text-right pr-4">
+                            <button class="text-slate-500 hover:text-white transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                        <td class="py-6 pl-4 font-bold text-indigo-400">#REC-9820</td>
+                        <td class="py-6 text-white font-bold">20127112</td>
+                        <td class="py-6 font-mono text-xs text-slate-500">a4f1...77b2</td>
+                        <td class="py-6 text-center">
+                            <span class="px-3 py-1 bg-red-500/10 text-red-400 rounded-full text-xs font-black border border-red-500/20">0.98 (AI)</span>
+                        </td>
+                        <td class="py-6 text-slate-400">2026-04-29 14:18:02</td>
+                        <td class="py-6 text-right pr-4">
+                            <button class="text-slate-500 hover:text-white transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                        <td class="py-6 pl-4 font-bold text-indigo-400">#REC-9819</td>
+                        <td class="py-6 text-white font-bold">20127554</td>
+                        <td class="py-6 font-mono text-xs text-slate-500">c2b8...f9a4</td>
+                        <td class="py-6 text-center">
+                            <span class="px-3 py-1 bg-orange-500/10 text-orange-400 rounded-full text-xs font-black border border-orange-500/20">0.65 (Uncertain)</span>
+                        </td>
+                        <td class="py-6 text-slate-400">2026-04-29 14:15:44</td>
+                        <td class="py-6 text-right pr-4">
+                            <button class="text-slate-500 hover:text-white transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="mt-8 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-600">
+                <span>Showing 3 of 14,892 records</span>
+                <div class="flex space-x-4">
+                    <button class="hover:text-white transition-colors">Previous</button>
+                    <button class="text-indigo-400">1</button>
+                    <button class="hover:text-white transition-colors">2</button>
+                    <button class="hover:text-white transition-colors">3</button>
+                    <button class="hover:text-white transition-colors">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schema Explorer Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4 mb-12">
+            <div class="glass p-8 rounded-[2.5rem] border border-white/5">
+                <h4 class="text-sm font-bold text-white mb-6 uppercase tracking-widest">Table: users_profile</h4>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-500">id</span>
+                        <span class="text-indigo-400 font-mono">SERIAL PK</span>
+                    </div>
+                    <div class="flex justify-between text-xs border-t border-white/5 pt-3">
+                        <span class="text-slate-500">mssv</span>
+                        <span class="text-slate-300 font-mono">VARCHAR(20)</span>
+                    </div>
+                    <div class="flex justify-between text-xs border-t border-white/5 pt-3">
+                        <span class="text-slate-500">role</span>
+                        <span class="text-slate-300 font-mono">ENUM</span>
+                    </div>
+                </div>
+            </div>
+            <div class="glass p-8 rounded-[2.5rem] border border-white/5">
+                <h4 class="text-sm font-bold text-white mb-6 uppercase tracking-widest">Table: submissions</h4>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-500">id</span>
+                        <span class="text-indigo-400 font-mono">UUID PK</span>
+                    </div>
+                    <div class="flex justify-between text-xs border-t border-white/5 pt-3">
+                        <span class="text-slate-500">user_id</span>
+                        <span class="text-orange-400 font-mono">FK (users)</span>
+                    </div>
+                    <div class="flex justify-between text-xs border-t border-white/5 pt-3">
+                        <span class="text-slate-500">code_hash</span>
+                        <span class="text-slate-300 font-mono">TEXT</span>
+                    </div>
+                </div>
+            </div>
+            <div class="glass p-8 rounded-[2.5rem] border border-white/5">
+                <h4 class="text-sm font-bold text-white mb-6 uppercase tracking-widest">System Health</h4>
+                <div class="space-y-4 mt-2">
+                    <div class="flex justify-between text-[10px] font-black uppercase">
+                        <span class="text-slate-500">Table Bloat</span>
+                        <span class="text-green-400">0.2%</span>
+                    </div>
+                    <div class="h-1 bg-slate-800 rounded-full">
+                        <div class="h-full bg-green-500" style="width: 2%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-black uppercase pt-2">
+                        <span class="text-slate-500">Index Usage</span>
+                        <span class="text-indigo-400">94.2%</span>
+                    </div>
+                    <div class="h-1 bg-slate-800 rounded-full">
+                        <div class="h-full bg-indigo-500" style="width: 94%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</body>
+
+</html>

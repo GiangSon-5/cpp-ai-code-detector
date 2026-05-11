@@ -1,0 +1,182 @@
+{% extends "base_admin.html" %}
+{% block title %}User Management — CodeGuard AI{% endblock %}
+
+{% block content %}
+
+<div class="flex justify-between items-center">
+  <div>
+    <p class="text-xs font-black uppercase tracking-widest" style="color:#22d3ee;">Access Control</p>
+    <h1 class="text-3xl font-black text-white">User Management</h1>
+  </div>
+  <div class="flex gap-3">
+    <div class="px-5 py-3 rounded-2xl" style="background:rgba(34,211,238,0.06);border:1px solid rgba(34,211,238,0.15);">
+      <span class="text-xs font-black" style="color:#22d3ee;">{{ users|length }} Users Registered</span>
+    </div>
+  </div>
+</div>
+
+<!-- User Table -->
+<div class="glass rounded-3xl overflow-hidden">
+  <div class="flex justify-between items-center px-8 py-6 border-b" style="border-color:rgba(255,255,255,0.05);">
+    <h3 class="text-xs font-black uppercase tracking-widest" style="color:#22d3ee;">Registered Users</h3>
+    <input type="text" id="user-search" class="input-dark"
+      style="width:220px;border-radius:12px;padding:8px 16px;font-size:0.8rem;" placeholder="Search users..."
+      oninput="filterUsers(this.value)">
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr style="background:rgba(255,255,255,0.02);">
+        <th style="padding:16px 24px 14px;">User</th>
+        <th style="padding:16px 16px 14px;">Email</th>
+        <th style="padding:16px 16px 14px;">Role</th>
+        <th style="padding:16px 16px 14px;">Status</th>
+        <th style="padding:16px 16px 14px;">Submissions</th>
+        <th style="padding:16px 16px 14px;">Joined</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr class="user-row" data-search="{{ u.username }} {{ u.email }}">
+        <td style="padding:20px 24px;">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-black"
+              style="background:linear-gradient(135deg,rgba(34,211,238,0.15),rgba(59,130,246,0.15));color:#22d3ee;border:1px solid rgba(34,211,238,0.15);">
+              {{ u.username|slice:":1"|upper }}
+            </div>
+            <div>
+              <p class="text-sm font-bold text-white">{{ u.username }}</p>
+              <p class="text-xs" style="color:#64748b;">ID #{{ u.id }}</p>
+            </div>
+          </div>
+        </td>
+        <td style="padding:20px 16px;">
+          <span class="text-sm" style="color:#94a3b8;">{{ u.email|default:"—" }}</span>
+        </td>
+        <td style="padding:20px 16px;">
+          {% if u.is_superuser %}
+          <span class="badge"
+            style="background:rgba(251,191,36,0.1);color:#fbbf24;border-color:rgba(251,191,36,0.2);">Superuser</span>
+          {% elif u.is_staff %}
+          <span class="badge badge-oop">Staff</span>
+          {% else %}
+          <span class="badge badge-uncertain">User</span>
+          {% endif %}
+        </td>
+        <td style="padding:20px 16px;">
+          {% if u.is_active %}
+          <div class="flex items-center gap-2">
+            <span class="status-dot online"></span>
+            <span class="text-xs font-bold" style="color:#4ade80;">Active</span>
+          </div>
+          {% else %}
+          <div class="flex items-center gap-2">
+            <span class="status-dot offline"></span>
+            <span class="text-xs font-bold" style="color:#64748b;">Inactive</span>
+          </div>
+          {% endif %}
+        </td>
+        <td style="padding:20px 16px;">
+          <span class="text-sm font-black text-white">{{ u.bronzesubmission_set.count }}</span>
+        </td>
+        <td style="padding:20px 16px;">
+          <span class="text-xs" style="color:#64748b;">{{ u.date_joined|date:"d/m/Y" }}</span>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" style="padding:40px;text-align:center;color:#475569;">No users found</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="px-8 py-5 border-t" style="border-color:rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
+    <span class="text-xs font-bold" style="color:#64748b;">{{ users|length }} total users</span>
+  </div>
+</div>
+
+<!-- Data Access Matrix -->
+<div>
+  <h3 class="text-xs font-black uppercase tracking-widest mb-5" style="color:#22d3ee;">Data Layer Access Matrix</h3>
+  <div class="grid grid-cols-3 gap-6">
+    <div class="glass rounded-3xl p-7" style="border-color:rgba(251,146,60,0.15);">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(251,146,60,0.1);">
+          <svg class="w-5 h-5" style="color:#fb923c;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7" />
+          </svg>
+        </div>
+        <span class="text-sm font-black" style="color:#fb923c;">Bronze Layer</span>
+      </div>
+      <p class="text-xs leading-relaxed" style="color:#64748b;">Raw code submissions. All authenticated users can write.
+        Staff can read all.</p>
+      <div class="mt-4 space-y-2">
+        <div class="flex justify-between text-xs"><span style="color:#94a3b8;">User (authenticated)</span><span
+            style="color:#4ade80;">Write Own</span></div>
+        <div class="flex justify-between text-xs"><span style="color:#94a3b8;">Staff</span><span
+            style="color:#22d3ee;">Read All</span></div>
+        <div class="flex justify-between text-xs"><span style="color:#94a3b8;">Superuser</span><span
+            style="color:#fbbf24;">Full</span></div>
+      </div>
+    </div>
+
+    <div class="glass rounded-3xl p-7" style="border-color:rgba(148,163,184,0.15);">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(148,163,184,0.1);">
+          <svg class="w-5 h-5" style="color:#94a3b8;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
+          </svg>
+        </div>
+        <span class="text-sm font-black" style="color:#94a3b8;">Silver Layer</span>
+      </div>
+      <p class="text-xs leading-relaxed" style="color:#64748b;">Tokenized Parquet files on DagsHub S3. Managed via DVC.
+        Staff/pipeline access only.</p>
+      <div class="mt-4 space-y-2">
+        <div class="flex justify-between text-xs"><span style="color:#94a3b8;">User (authenticated)</span><span
+            style="color:#f87171;">No Access</span></div>
+        <div class="flex justify-between text-xs"><span style="color:#94a3b8;">Staff</span><span
+            style="color:#22d3ee;">Read</span></div>
+        <div class="flex justify-between text-xs"><span style="color:#94a3b8;">Pipeline (Celery)</span><span
+            style="color:#fbbf24;">Write</span></div>
+      </div>
+    </div>
+
+    <div class="glass rounded-3xl p-7" style="border-color:rgba(251,191,36,0.15);">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(251,191,36,0.1);">
+          <svg class="w-5 h-5" style="color:#fbbf24;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <span class="text-sm font-black" style="color:#fbbf24;">Gold Layer</span>
+      </div>
+      <p class="text-xs leading-relaxed" style="color:#64748b;">Predictions + SHAP heatmaps. Users read their own
+        results. Staff see all analytics.</p>
+      <div class="mt-4 space-y-2">
+        <div class="flex justify-between text-xs"><span style="color:#94a3b8;">User (authenticated)</span><span
+            style="color:#4ade80;">Read Own</span></div>
+        <div class="flex justify-between text-xs"><span style="color:#94a3b8;">Staff</span><span
+            style="color:#22d3ee;">Read All + Aggregate</span></div>
+        <div class="flex justify-between text-xs"><span style="color:#94a3b8;">FastAPI</span><span
+            style="color:#fbbf24;">Write</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function filterUsers(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('.user-row').forEach(row => {
+      row.style.display = row.dataset.search.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+</script>
+{% endblock %}

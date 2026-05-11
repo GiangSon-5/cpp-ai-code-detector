@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyze Code - AI Code Detector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #0b0f1a; color: #e2e8f0; }
+        .glass { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .editor-bg { background-color: #0d1117; }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .shimmer::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); animation: shimmer 2s infinite; }
+    </style>
+</head>
+<body class="h-screen flex flex-col p-8 space-y-8 overflow-hidden">
+
+    <!-- Navigation Header -->
+    <header class="flex justify-between items-center px-4">
+        <div class="flex items-center space-x-4">
+            <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight">AI Code Detector <span class="text-cyan-400">AI</span></h1>
+        </div>
+        <nav class="flex space-x-12 text-sm font-bold uppercase tracking-widest text-slate-500">
+            <a href="user_input.html" class="text-cyan-400 border-b-2 border-cyan-400 pb-2">1. Analyze</a>
+            <a href="user_analysis.html" class="hover:text-white transition-colors">2. Deep Analysis</a>
+            <a href="user_history.html" class="hover:text-white transition-colors">3. History</a>
+            <a href="user_settings.html" class="hover:text-white transition-colors">Settings</a>
+        </nav>
+        <div class="flex items-center space-x-3">
+            <img src="https://i.pravatar.cc/150?u=sarah" class="w-10 h-10 rounded-full border-2 border-slate-700" alt="Sarah">
+        </div>
+    </header>
+
+    <!-- Main Input Workspace -->
+    <main class="flex-1 flex space-x-10 overflow-hidden">
+        
+        <!-- Left: Upload & Config (Spacious) -->
+        <div class="w-1/4 flex flex-col space-y-8">
+            <div>
+                <h2 class="text-4xl font-black text-white leading-tight">New Analysis</h2>
+                <p class="text-slate-500 mt-2">Upload your C++ project files to begin the AI detection process.</p>
+            </div>
+
+            <!-- Enhanced Folder Upload -->
+            <div class="flex-1 glass rounded-[2.5rem] border-2 border-dashed border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col items-center justify-center p-10 text-center space-y-6 group">
+                <div class="w-24 h-24 bg-slate-900 rounded-[2rem] flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                    <svg class="w-10 h-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Project Directory</h3>
+                    <p class="text-sm text-slate-500 mt-2 leading-relaxed">Drag and drop your C++ project folder here or browse files.</p>
+                </div>
+                <button class="px-8 py-3 bg-white text-black font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-cyan-400 transition-colors">Select Folder</button>
+            </div>
+
+            <!-- Submit Controls -->
+            <div class="space-y-4">
+                <button class="w-full py-5 bg-cyan-500 hover:bg-cyan-400 text-white font-black rounded-[2rem] shadow-2xl shadow-cyan-500/20 transition-all uppercase tracking-[0.2em] text-sm">Analyze Source Code</button>
+                <button class="w-full py-4 text-slate-500 font-bold hover:text-white transition-colors uppercase tracking-widest text-xs">Clear Editor</button>
+            </div>
+        </div>
+
+        <!-- Right: Giant Editor Area -->
+        <div class="flex-1 glass rounded-[3rem] overflow-hidden flex flex-col shadow-2xl relative">
+            <div class="bg-slate-900/50 px-10 py-6 border-b border-white/5 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 rounded-full bg-slate-700"></div>
+                    <div class="w-3 h-3 rounded-full bg-slate-700"></div>
+                    <div class="w-3 h-3 rounded-full bg-slate-700"></div>
+                    <span class="ml-8 text-xs font-black text-slate-500 uppercase tracking-widest">Source Code Input</span>
+                </div>
+                <span class="text-[10px] font-black text-cyan-500/60 uppercase tracking-[0.2em]">C++ Standard ISO/IEC 14882</span>
+            </div>
+            <textarea class="flex-1 bg-[#0d1117] p-12 font-mono text-lg text-slate-300 focus:outline-none resize-none leading-relaxed" placeholder="// Paste your C++ code here..."></textarea>
+            
+            <!-- Floating Progress Info -->
+            <div class="absolute bottom-10 right-10 glass px-8 py-6 rounded-3xl border border-cyan-500/20 flex items-center space-x-6">
+                <div class="w-12 h-12 rounded-full border-4 border-slate-800 border-t-cyan-400 animate-spin"></div>
+                <div>
+                    <p class="text-[10px] font-black text-cyan-400 uppercase tracking-widest leading-none">Status</p>
+                    <p class="text-sm font-bold text-white mt-1">Awaiting Input...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

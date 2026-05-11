@@ -1,0 +1,264 @@
+{% extends "base_admin.html" %}
+{% block title %}Live Monitoring — CodeGuard AI{% endblock %}
+
+{% block content %}
+<style>
+  @keyframes spin-ring {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes pulse-dot {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.4;
+    }
+  }
+</style>
+
+<!-- Header -->
+<div class="flex justify-between items-center" id="admin-header">
+  <div>
+    <p class="text-xs font-black uppercase tracking-widest" style="color:#22d3ee;">Live MLOps Hub</p>
+    <h1 class="text-3xl font-black text-white">System Overview</h1>
+    <p class="text-sm mt-1" style="color:#64748b;">Last updated: <span id="last-updated">—</span></p>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="status-dot online" style="width:10px;height:10px;"></span>
+    <span class="text-xs font-bold" style="color:#4ade80;">All Systems Operational</span>
+  </div>
+</div>
+
+<!-- KPI Row (Metrics from DB + polling) -->
+<div class="metrics-grid">
+  <div class="metric-card" style="border-bottom-color:#22d3ee;">
+    <p class="metric-label">Inference P95</p>
+    <p class="metric-value" id="kpi-p95">—</p>
+    <p class="metric-sub" style="color:#22d3ee;" id="kpi-p95-sub">⬇ Latency</p>
+  </div>
+  <div class="metric-card" style="border-bottom-color:#fbbf24;">
+    <p class="metric-label">GPU VRAM Usage</p>
+    <p class="metric-value" id="kpi-vram">—</p>
+    <p class="metric-sub" style="color:#fbbf24;" id="kpi-vram-sub">Colab Instance</p>
+  </div>
+  <div class="metric-card" style="border-bottom-color:#c084fc;">
+    <p class="metric-label">Celery Backlog</p>
+    <p class="metric-value" id="kpi-celery">{{ metrics.celery_backlog|default:"0" }}</p>
+    <p class="metric-sub" style="color:#c084fc;">Queued Tasks</p>
+  </div>
+  <div class="metric-card" style="border-bottom-color:#60a5fa;">
+    <p class="metric-label">Total Submissions</p>
+    <p class="metric-value" id="kpi-total">{{ global_stats.total }}</p>
+    <p class="metric-sub" style="color:#60a5fa;" id="kpi-today">Gold Layer Records</p>
+  </div>
+</div>
+
+
+<!-- Middle row: Medallion Flow + Prediction Ratio -->
+<div class="grid gap-6" style="grid-template-columns:2fr 1fr;">
+
+  <!-- Medallion Data Flow -->
+  <div class="glass rounded-3xl p-8">
+    <h3 class="text-xs font-black uppercase tracking-widest mb-6" style="color:#22d3ee;">Medallion Data Architecture
+    </h3>
+    <div class="flex items-center gap-4">
+      <!-- Bronze -->
+      <div class="flex-1 rounded-2xl p-6 border"
+        style="background:rgba(251,146,60,0.06);border-color:rgba(251,146,60,0.15);">
+        <p class="text-xs font-black uppercase tracking-widest" style="color:#fb923c;">Bronze</p>
+        <p class="text-2xl font-black text-white mt-2" id="bronze-count">{{ global_stats.total }}</p>
+        <p class="text-xs mt-1" style="color:#64748b;">Raw submissions</p>
+        <p class="text-xs mt-3" style="color:#475569;font-family:'Fira Code',monospace;">PostgreSQL</p>
+      </div>
+      <svg class="w-6 h-6 flex-shrink-0" style="color:#334155;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+      <!-- Silver -->
+      <div class="flex-1 rounded-2xl p-6 border"
+        style="background:rgba(148,163,184,0.06);border-color:rgba(148,163,184,0.15);">
+        <p class="text-xs font-black uppercase tracking-widest" style="color:#94a3b8;">Silver</p>
+        <p class="text-2xl font-black text-white mt-2">Parquet</p>
+        <p class="text-xs mt-1" style="color:#64748b;">Tokenized features</p>
+        <p class="text-xs mt-3" style="color:#475569;font-family:'Fira Code',monospace;">DagsHub S3 + DVC</p>
+      </div>
+      <svg class="w-6 h-6 flex-shrink-0" style="color:#334155;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+      <!-- Gold -->
+      <div class="flex-1 rounded-2xl p-6 border"
+        style="background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.15);">
+        <p class="text-xs font-black uppercase tracking-widest" style="color:#fbbf24;">Gold</p>
+        <p class="text-2xl font-black text-white mt-2">{{ global_stats.total }}</p>
+        <p class="text-xs mt-1" style="color:#64748b;">Predictions + SHAP</p>
+        <p class="text-xs mt-3" style="color:#475569;font-family:'Fira Code',monospace;">PostgreSQL GoldPrediction</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prediction Ratio (Chart.js doughnut) -->
+  <div class="glass rounded-3xl p-8 flex flex-col">
+    <h3 class="text-xs font-black uppercase tracking-widest mb-4" style="color:#22d3ee;">Prediction Ratio</h3>
+    <div class="flex-1 flex items-center justify-center">
+      <canvas id="ratioChart" width="180" height="180"></canvas>
+    </div>
+    <div class="flex justify-around mt-4">
+      <div class="text-center">
+        <p class="text-xl font-black" style="color:#f87171;">{{ global_stats.ai_count }}</p>
+        <p class="text-xs font-bold uppercase tracking-widest" style="color:#64748b;">AI</p>
+      </div>
+      <div class="text-center">
+        <p class="text-xl font-black" style="color:#4ade80;">{{ global_stats.human_count }}</p>
+        <p class="text-xs font-bold uppercase tracking-widest" style="color:#64748b;">Human</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom row: Recent submissions table -->
+<div class="glass rounded-3xl overflow-hidden">
+  <div class="flex justify-between items-center px-8 py-6 border-b" style="border-color:rgba(255,255,255,0.05);">
+    <h3 class="text-xs font-black uppercase tracking-widest" style="color:#22d3ee;">Recent Submissions (Your Account)
+    </h3>
+    <a href="{% url 'dashboard:database' %}" class="btn btn-ghost"
+      style="padding:8px 16px;border-radius:10px;font-size:0.65rem;">
+      View All →
+    </a>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr style="background:rgba(255,255,255,0.02);">
+        <th style="padding:16px 24px 14px;">Hash</th>
+        <th style="padding:16px 16px 14px;">Score</th>
+        <th style="padding:16px 16px 14px;">Prediction</th>
+        <th style="padding:16px 16px 14px;">Source</th>
+        <th style="padding:16px 16px 14px;">Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sub in recent_submissions %}
+      <tr>
+        <td style="padding:18px 24px;">
+          <code class="text-xs font-mono" style="color:#64748b;">{{ sub.code_hash|slice:":16" }}...</code>
+        </td>
+        <td style="padding:18px 16px;">
+          <span class="text-sm font-bold text-white">{{ sub.confidence|floatformat:4|default:"—" }}</span>
+        </td>
+        <td style="padding:18px 16px;">
+          {% if sub.prediction == 'AI GENERATED' %}
+          <span class="badge badge-ai">AI</span>
+          {% elif sub.prediction == 'HUMAN WRITTEN' %}
+          <span class="badge badge-human">Human</span>
+          {% else %}
+          <span class="badge badge-uncertain">Pending</span>
+          {% endif %}
+        </td>
+        <td style="padding:18px 16px;">
+          <span class="text-xs" style="color:#475569;">{{ sub.source }}</span>
+        </td>
+        <td style="padding:18px 16px;">
+          <span class="text-xs" style="color:#475569;">{{ sub.timestamp|timesince }} ago</span>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" style="padding:40px;text-align:center;color:#475569;">No submissions yet</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ── Prediction ratio doughnut ──────────────────────────────────────
+  const ctx = document.getElementById('ratioChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['AI Generated', 'Human Written', 'Pending'],
+        datasets: [{
+          data: [
+            {{ global_stats.ai_count }},
+            {{ global_stats.human_count }},
+            {{ global_stats.total|add:0 }} - {{ global_stats.ai_count }} - {{ global_stats.human_count }}
+          ],
+  backgroundColor: ['rgba(248,113,113,0.8)', 'rgba(74,222,128,0.8)', 'rgba(100,116,139,0.4)'],
+    borderWidth: 0,
+      hoverOffset: 6,
+      }]
+    },
+  options: {
+    cutout: '72%',
+      plugins: {
+      legend: { display: false }, tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.raw}`
+        }
+      }
+    },
+  }
+  });
+}
+
+  // ── Live polling every 30s ─────────────────────────────────────────
+  function fetchMetrics() {
+    fetch("{% url 'dashboard:metrics_api' %}")
+      .then(r => r.json())
+      .then(d => {
+        // P95 latency
+        const p95El = document.getElementById('kpi-p95');
+        if (p95El) {
+          p95El.textContent = d.inference_p95_ms != null ? d.inference_p95_ms + ' ms' : '—';
+        }
+
+        // GPU VRAM
+        const vramEl = document.getElementById('kpi-vram');
+        const vramSub = document.getElementById('kpi-vram-sub');
+        if (vramEl) {
+          if (d.gpu_vram_used_gb != null) {
+            const total = d.gpu_vram_total_gb ? '/' + d.gpu_vram_total_gb + ' GB' : '';
+            vramEl.textContent = d.gpu_vram_used_gb + ' GB' + total;
+            if (vramSub) vramSub.textContent = (d.gpu_vram_pct || 0).toFixed(1) + '% utilization';
+          } else {
+            vramEl.textContent = d.gpu_available ? 'Loading...' : 'No GPU';
+          }
+        }
+
+        // Celery
+        const celeryEl = document.getElementById('kpi-celery');
+        if (celeryEl && d.celery_backlog !== undefined) celeryEl.textContent = d.celery_backlog;
+
+        // Total + today
+        const totalEl = document.getElementById('kpi-total');
+        const todayEl = document.getElementById('kpi-today');
+        if (totalEl && d.total !== undefined) totalEl.textContent = d.total;
+        if (todayEl && d.submissions_today !== undefined)
+          todayEl.textContent = '+' + d.submissions_today + ' today';
+
+        // System status header
+        const statusBadge = document.querySelector('#admin-header span[style*="4ade80"]');
+        if (statusBadge) {
+          const allOk = d.redis_ok && (d.models_loaded || d.request_count === 0);
+          statusBadge.textContent = allOk ? 'All Systems Operational' : 'Degraded — check services';
+          statusBadge.style.color = allOk ? '#4ade80' : '#fb923c';
+        }
+
+        // Timestamp
+        document.getElementById('last-updated').textContent = new Date().toLocaleTimeString('vi-VN');
+      })
+      .catch(() => { });
+  }
+  fetchMetrics();
+  setInterval(fetchMetrics, 30000);
+
+</script>
+{% endblock %}

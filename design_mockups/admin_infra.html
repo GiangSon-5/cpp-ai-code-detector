@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infrastructure Control - Microservices & K8s</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f1a;
+            color: #e2e8f0;
+        }
+
+        .glass {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .status-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(34, 211, 238, 0.3);
+        }
+    </style>
+</head>
+
+<body class="h-screen flex p-6 space-x-6 overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-20 lg:w-72 glass rounded-[3rem] flex flex-col p-8 transition-all shadow-2xl">
+        <div class="flex items-center space-x-4 px-2">
+            <div class="w-10 h-10 bg-cyan-500 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+            </div>
+            <h1 class="hidden lg:block text-xl font-black uppercase tracking-tighter">Command <span
+                    class="text-cyan-400">Center</span></h1>
+        </div>
+
+        <nav class="mt-12 flex-1 space-y-2">
+            <a href="admin_v2.html"
+                class="flex items-center space-x-4 p-4 text-slate-500 hover:text-white transition-all hover:bg-slate-800/50 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-medium">Live Monitoring</span>
+            </a>
+            <a href="admin_metrics.html"
+                class="flex items-center space-x-4 p-4 text-slate-500 hover:text-white transition-all hover:bg-slate-800/50 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-medium">Metrics & Grafana</span>
+            </a>
+            <a href="admin_infra.html"
+                class="flex items-center space-x-4 p-4 bg-orange-500/10 text-orange-400 rounded-2xl border border-orange-500/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-bold">Infrastructure</span>
+            </a>
+            <a href="admin_database.html"
+                class="flex items-center space-x-4 p-4 text-slate-500 hover:text-white transition-all hover:bg-slate-800/50 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-medium">System Database</span>
+            </a>
+            <a href="admin_users.html"
+                class="flex items-center space-x-4 p-4 text-slate-500 hover:text-white transition-all hover:bg-slate-800/50 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-medium">User Management</span>
+            </a>
+            <a href="admin_models.html"
+                class="flex items-center space-x-4 p-4 text-slate-500 hover:text-white transition-all hover:bg-slate-800/50 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                    </path>
+                </svg>
+                <span class="hidden lg:block font-medium">Model Registry</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col space-y-8 overflow-y-auto pr-4 custom-scrollbar min-h-0 pb-40">
+
+        <!-- Header -->
+        <div class="flex justify-between items-end px-4">
+            <div>
+                <h2 class="text-4xl font-black text-white leading-tight tracking-tight uppercase">Infrastructure</h2>
+                <p class="text-slate-500 mt-2">Monitor container health, orchestration events, and self-healing mechanisms.</p>
+            </div>
+            <div class="flex space-x-4">
+                <button class="px-6 py-3 glass text-orange-400 font-bold rounded-2xl text-xs uppercase tracking-widest hover:bg-orange-500/10 transition-all">Restart All Services</button>
+            </div>
+        </div>
+
+        <!-- Service Cluster Groups -->
+        <div class="space-y-10">
+            
+            <!-- Group 1: Core API & Application -->
+            <div>
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center space-x-4 px-4">
+                    <span>Core Services Cluster</span>
+                    <div class="flex-1 h-px bg-white/5"></div>
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- FastAPI -->
+                    <div class="p-6 glass rounded-3xl border-t-2 border-t-cyan-500 bg-cyan-500/5">
+                        <div class="flex justify-between items-start mb-4">
+                            <h4 class="text-sm font-bold text-white">fastapi-inference</h4>
+                            <div class="w-2 h-2 bg-green-500 rounded-full status-pulse"></div>
+                        </div>
+                        <div class="flex justify-between items-end mt-6">
+                            <span class="text-[10px] text-slate-500 font-black uppercase">CPU: 42%</span>
+                            <span class="text-[10px] text-slate-500 font-black uppercase">Restarts: 0</span>
+                        </div>
+                    </div>
+                    <!-- Django -->
+                    <div class="p-6 glass rounded-3xl border-t-2 border-t-green-500 bg-green-500/5">
+                        <div class="flex justify-between items-start mb-4">
+                            <h4 class="text-sm font-bold text-white">django-gateway</h4>
+                            <div class="w-2 h-2 bg-green-500 rounded-full status-pulse"></div>
+                        </div>
+                        <div class="flex justify-between items-end mt-6">
+                            <span class="text-[10px] text-slate-500 font-black uppercase">RAM: 1.2GB</span>
+                            <span class="text-[10px] text-slate-500 font-black uppercase">Uptime: 24d</span>
+                        </div>
+                    </div>
+                    <!-- Celery Worker -->
+                    <div class="p-6 glass rounded-3xl border-t-2 border-t-purple-500 bg-purple-500/5">
+                        <div class="flex justify-between items-start mb-4">
+                            <h4 class="text-sm font-bold text-white">celery-ml-workers</h4>
+                            <div class="w-2 h-2 bg-green-500 rounded-full status-pulse"></div>
+                        </div>
+                        <div class="flex justify-between items-end mt-6">
+                            <span class="text-[10px] text-slate-500 font-black uppercase">Load: 88%</span>
+                            <span class="text-[10px] text-orange-400 font-black uppercase">Restarts: 2</span>
+                        </div>
+                    </div>
+                    <!-- Redpanda -->
+                    <div class="p-6 glass rounded-3xl border-t-2 border-t-red-500 bg-red-500/5">
+                        <div class="flex justify-between items-start mb-4">
+                            <h4 class="text-sm font-bold text-white">redpanda-broker</h4>
+                            <div class="w-2 h-2 bg-green-500 rounded-full status-pulse"></div>
+                        </div>
+                        <div class="flex justify-between items-end mt-6">
+                            <span class="text-[10px] text-slate-500 font-black uppercase">MSGS: 4.2k/s</span>
+                            <span class="text-[10px] text-slate-500 font-black uppercase">Latency: 2ms</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group 2: Data & Storage Layer (DagsHub + DVC + SQL) -->
+            <div>
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center space-x-4 px-4">
+                    <span>Data Persistence & Remote Storage</span>
+                    <div class="flex-1 h-px bg-white/5"></div>
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- DagsHub S3 Proxy -->
+                    <div class="p-6 glass rounded-3xl border-t-2 border-t-blue-500 bg-blue-500/5">
+                        <div class="flex justify-between items-start mb-4">
+                            <h4 class="text-sm font-bold text-white">dagshub-s3-proxy</h4>
+                            <div class="w-2 h-2 bg-green-500 rounded-full status-pulse"></div>
+                        </div>
+                        <div class="flex justify-between items-end mt-6">
+                            <span class="text-[10px] text-slate-500 font-black uppercase">IO: 24MB/s</span>
+                            <span class="text-[10px] text-slate-500 font-black uppercase">Status: Connected</span>
+                        </div>
+                    </div>
+                    <!-- DVC Remote Mirror -->
+                    <div class="p-6 glass rounded-3xl border-t-2 border-t-cyan-500 bg-cyan-500/5">
+                        <div class="flex justify-between items-start mb-4">
+                            <h4 class="text-sm font-bold text-white">dvc-remote-mirror</h4>
+                            <div class="w-2 h-2 bg-green-500 rounded-full status-pulse"></div>
+                        </div>
+                        <div class="flex justify-between items-end mt-6">
+                            <span class="text-[10px] text-slate-500 font-black uppercase">Cache: 2.4TB</span>
+                            <span class="text-[10px] text-slate-500 font-black uppercase">Sync: 98%</span>
+                        </div>
+                    </div>
+                    <!-- PostgreSQL (Django DB) -->
+                    <div class="p-6 glass rounded-3xl border-t-2 border-t-indigo-500 bg-indigo-500/5">
+                        <div class="flex justify-between items-start mb-4">
+                            <h4 class="text-sm font-bold text-white">postgres-db (Main)</h4>
+                            <div class="w-2 h-2 bg-green-500 rounded-full status-pulse"></div>
+                        </div>
+                        <div class="flex justify-between items-end mt-6">
+                            <span class="text-[10px] text-slate-500 font-black uppercase">Conn: 45/100</span>
+                            <span class="text-[10px] text-slate-500 font-black uppercase">Size: 4.8GB</span>
+                        </div>
+                    </div>
+                    <!-- Redis -->
+                    <div class="p-6 glass rounded-3xl border-t-2 border-t-orange-500 bg-orange-500/5">
+                        <div class="flex justify-between items-start mb-4">
+                            <h4 class="text-sm font-bold text-white">redis-cache</h4>
+                            <div class="w-2 h-2 bg-orange-500 rounded-full animate-ping"></div>
+                        </div>
+                        <div class="flex justify-between items-end mt-6">
+                            <span class="text-[10px] text-orange-400 font-black uppercase">Self-healing</span>
+                            <span class="text-[10px] text-white font-black">RESTARTING</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group 3: Observability & Monitoring -->
+            <div>
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center space-x-4 px-4">
+                    <span>Observability Stack</span>
+                    <div class="flex-1 h-px bg-white/5"></div>
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Prometheus -->
+                    <div class="p-6 glass rounded-3xl border-t-2 border-t-orange-600 bg-orange-600/5 flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-bold text-white">prometheus-server</h4>
+                            <p class="text-[10px] text-slate-500 mt-1 uppercase font-black tracking-widest">TSDB Scraper</p>
+                        </div>
+                        <div class="w-8 h-8 bg-orange-600/20 rounded-xl flex items-center justify-center text-orange-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        </div>
+                    </div>
+                    <!-- Grafana -->
+                    <div class="p-6 glass rounded-3xl border-t-2 border-t-orange-400 bg-orange-400/5 flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-bold text-white">grafana-viz</h4>
+                            <p class="text-[10px] text-slate-500 mt-1 uppercase font-black tracking-widest">Dashboards</p>
+                        </div>
+                        <div class="w-8 h-8 bg-orange-400/20 rounded-xl flex items-center justify-center text-orange-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                        </div>
+                    </div>
+                    <!-- Loki -->
+                    <div class="p-6 glass rounded-3xl border-t-2 border-t-yellow-400 bg-yellow-400/5 flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-bold text-white">loki-logs</h4>
+                            <p class="text-[10px] text-slate-500 mt-1 uppercase font-black tracking-widest">Log Aggregator</p>
+                        </div>
+                        <div class="w-8 h-8 bg-yellow-400/20 rounded-xl flex items-center justify-center text-yellow-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- DevOps & IaC Automation (Terraform, Ansible, K8s) -->
+        <div class="space-y-6">
+            <h3 class="text-xs font-black text-slate-500 uppercase tracking-[0.3em] flex items-center space-x-4 px-4">
+                <span>IaC & Automation Pipeline</span>
+                <div class="flex-1 h-px bg-white/5"></div>
+            </h3>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
+                <!-- Terraform Provisioning -->
+                <div class="glass p-8 rounded-[2.5rem] border border-cyan-500/20 bg-cyan-500/5 shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-6 opacity-10">
+                        <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                    </div>
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-cyan-500/20 rounded-xl flex items-center justify-center text-cyan-400">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            </div>
+                            <h4 class="font-bold text-white uppercase text-xs tracking-widest">Terraform</h4>
+                        </div>
+                        <span class="text-[10px] font-black text-green-400 uppercase bg-green-400/10 px-3 py-1 rounded-full">Synced</span>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-black/20 rounded-2xl border border-white/5">
+                            <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Infrastructure State</p>
+                            <p class="text-xs text-white">42 Resources Managed</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="flex-1 py-3 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-500 hover:text-white transition-all">Plan</button>
+                            <button class="flex-1 py-3 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-500 hover:text-white transition-all">Apply</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ansible Configuration -->
+                <div class="glass p-8 rounded-[2.5rem] border border-red-500/20 bg-red-500/5 shadow-2xl relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center text-red-400">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z"></path></svg>
+                            </div>
+                            <h4 class="font-bold text-white uppercase text-xs tracking-widest">Ansible</h4>
+                        </div>
+                        <span class="text-[10px] font-black text-slate-500 uppercase bg-slate-500/10 px-3 py-1 rounded-full">Idle</span>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-black/20 rounded-2xl border border-white/5">
+                            <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Last Playbook</p>
+                            <p class="text-xs text-white">setup_ml_nodes.yml <span class="text-green-400 ml-2">Success</span></p>
+                        </div>
+                        <button class="w-full py-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Run Playbook</button>
+                    </div>
+                </div>
+
+                <!-- K8s Manifests (GitOps Sync) -->
+                <div class="glass p-8 rounded-[2.5rem] border border-blue-500/20 bg-blue-500/5 shadow-2xl relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                            </div>
+                            <h4 class="font-bold text-white uppercase text-xs tracking-widest">K8s Manifests</h4>
+                        </div>
+                        <span class="text-[10px] font-black text-yellow-500 uppercase bg-yellow-500/10 px-3 py-1 rounded-full">Out of Sync</span>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-black/20 rounded-2xl border border-white/5">
+                            <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Git Repository</p>
+                            <p class="text-xs text-white">git://mlops-infra/k8s-v2.1</p>
+                        </div>
+                        <button class="w-full py-3 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all">Sync Cluster</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orchestration Events (Self-healing Log) -->
+        <div class="glass rounded-[3rem] p-10 flex flex-col shadow-2xl">
+            <h3 class="text-xl font-black text-white uppercase tracking-tight mb-8">Self-Healing Events</h3>
+            <div class="space-y-4">
+                <!-- Event 1 -->
+                <div class="p-6 bg-slate-900/30 rounded-3xl border border-white/5 flex items-center justify-between border-l-4 border-l-orange-500">
+                    <div class="flex items-center space-x-6">
+                        <div class="text-[10px] font-black text-slate-600 uppercase">20:15:32</div>
+                        <div>
+                            <p class="text-sm font-bold text-white">Container <span class="text-orange-400">redis-v6-master</span> terminated (OOM)</p>
+                            <p class="text-[10px] text-slate-500">Docker Daemon detected failure. Policy: Restart Always.</p>
+                        </div>
+                    </div>
+                    <div class="px-4 py-1.5 bg-orange-500/10 text-orange-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-orange-500/20">Auto Recovering</div>
+                </div>
+                <!-- Event 2 -->
+                <div class="p-6 bg-slate-900/30 rounded-3xl border border-white/5 flex items-center justify-between border-l-4 border-l-green-500">
+                    <div class="flex items-center space-x-6">
+                        <div class="text-[10px] font-black text-slate-600 uppercase">19:42:10</div>
+                        <div>
+                            <p class="text-sm font-bold text-white">Service <span class="text-green-400">celery-ml-1</span> successfully recovered</p>
+                            <p class="text-[10px] text-slate-500">Restart counter: 2. Status: Healthy.</p>
+                        </div>
+                    </div>
+                    <div class="px-4 py-1.5 bg-green-500/10 text-green-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-500/20">Resolved</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</body>
+
+</html>
