@@ -151,6 +151,19 @@ def metrics_api_view(request):
     except Exception:
         pass
 
+    # ── Local GPU Server /gpu-stats (nguồn VRAM chính xác nhất) ──
+    # Orchestrator không có GPU — VRAM thực sự ở Local GPU Server (8002)
+    gpu_stats: dict = {}
+    try:
+        import httpx as _httpx, os as _os
+        gpu_url = _os.getenv("FASTAPI_AI_URL", "http://localhost:8002").rstrip("/")
+        with _httpx.Client(timeout=2.0) as client:
+            gres = client.get(f"{gpu_url}/gpu-stats")
+            if gres.status_code == 200:
+                gpu_stats = gres.json()
+    except Exception:
+        pass
+
     # ── Redis healthcheck ────────────────────────────────────────
     redis_ok = False
     try:
@@ -172,9 +185,10 @@ def metrics_api_view(request):
         "last_latency_ms": fastapi_health.get("last_latency_ms"),
         "request_count": fastapi_health.get("request_count", 0),
         "cache_size": fastapi_health.get("cache_size", 0),
-        "gpu_vram_used_gb": fastapi_health.get("gpu_vram_used_gb"),
-        "gpu_vram_total_gb": fastapi_health.get("gpu_vram_total_gb"),
-        "gpu_vram_pct": fastapi_health.get("gpu_vram_pct"),
+        # Ưu tiên dữ liệu VRAM từ Local GPU Server (chính xác hơn qua Orchestrator proxy)
+        "gpu_vram_used_gb":  gpu_stats.get("gpu_vram_used_gb")  or fastapi_health.get("gpu_vram_used_gb"),
+        "gpu_vram_total_gb": gpu_stats.get("gpu_vram_total_gb") or fastapi_health.get("gpu_vram_total_gb", 4.0),
+        "gpu_vram_pct":      gpu_stats.get("gpu_vram_pct")      or fastapi_health.get("gpu_vram_pct"),
         "models_loaded": fastapi_health.get("models_loaded", False),
         "gpu_available": fastapi_health.get("gpu_available", False),
         "fastapi_uptime_s": fastapi_health.get("uptime_seconds"),

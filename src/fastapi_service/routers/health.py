@@ -42,21 +42,46 @@ def _compute_p95(values: list[float]) -> float | None:
 
 
 def _get_gpu_stats() -> dict:
-    """Try to get real GPU VRAM from torch. Returns zeros if no GPU."""
+    """Lấy VRAM thực tế từ Local GPU Server (port 8002).
+
+    Orchestrator KHÔNG có GPU — model thực sự chạy ở Local GPU Server.
+    Hàm này query GET /gpu-stats của Local GPU Server để lấy số thật.
+
+    Fallback (nếu GPU server offline): dùng torch trực tiếp nếu có.
+    """
+    import os
+    gpu_server_url = os.getenv("FASTAPI_AI_URL", "http://localhost:8002").rstrip("/")
+
+    # ── Thử lấy từ Local GPU Server trước ───────────────────────────
+    try:
+        import httpx
+        with httpx.Client(timeout=2.0) as client:
+            resp = client.get(f"{gpu_server_url}/gpu-stats")
+            if resp.status_code == 200:
+                data = resp.json()
+                return {
+                    "gpu_vram_used_gb":  data.get("gpu_vram_used_gb"),
+                    "gpu_vram_total_gb": data.get("gpu_vram_total_gb", 4.0),
+                    "gpu_vram_pct":      data.get("gpu_vram_pct"),
+                }
+    except Exception:
+        pass
+
+    # ── Fallback: đọc từ process hiện tại (nếu có torch + GPU) ─────
     try:
         import torch
         if torch.cuda.is_available():
-            used  = torch.cuda.memory_allocated() / 1024**3
-            # Limit display to 4GB as requested by user
+            reserved     = torch.cuda.memory_reserved(0) / 1024**3
             total_display = 4.0
-            pct   = used / total_display * 100 if total_display > 0 else 0
+            pct           = reserved / total_display * 100 if total_display > 0 else 0
             return {
-                "gpu_vram_used_gb": round(used, 2),
+                "gpu_vram_used_gb":  round(reserved, 2),
                 "gpu_vram_total_gb": total_display,
-                "gpu_vram_pct": round(pct, 1),
+                "gpu_vram_pct":      round(pct, 1),
             }
     except Exception:
         pass
+
     return {"gpu_vram_used_gb": None, "gpu_vram_total_gb": None, "gpu_vram_pct": None}
 
 

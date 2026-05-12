@@ -148,6 +148,64 @@ def create_app(manager: LocalModelManager) -> FastAPI:
         }
 
     # ------------------------------------------------------------------
+    # GET /gpu-stats  — VRAM metrics cho Orchestrator polling
+    # ------------------------------------------------------------------
+    @app.get("/gpu-stats")
+    async def gpu_stats():
+        """Trả về thống kê VRAM thực tế từ Local GPU Server process.
+
+        Dùng memory_reserved() thay vì memory_allocated() vì:
+          - memory_allocated() → chỉ tính tensors đang giữ tích cực (rất thấp sau inference)
+          - memory_reserved() → tổng VRAM PyTorch đã allocate từ driver (bao gồm cache pool)
+            → phản ánh VRAM thực sự bị chiếm bởi process này
+        """
+        if not torch.cuda.is_available():
+            return {
+                "gpu_available": False,
+                "gpu_vram_used_gb": 0.0,
+                "gpu_vram_total_gb": 4.0,
+                "gpu_vram_pct": 0.0,
+                "gpu_name": "N/A",
+            }
+
+        try:
+            # memory_reserved() = allocated + cached pool — phản ánh VRAM thực tế bị chiếm
+            reserved_bytes   = torch.cuda.memory_reserved(0)
+            allocated_bytes  = torch.cuda.memory_allocated(0)
+            total_bytes      = torch.cuda.get_device_properties(0).total_memory
+
+            used_gb     = reserved_bytes  / 1024**3
+            alloc_gb    = allocated_bytes / 1024**3
+            total_gb    = total_bytes     / 1024**3
+
+            # Hiển thị giới hạn 4GB
+            display_total = min(total_gb, 4.0)
+            display_used  = min(used_gb, display_total)
+            pct           = (display_used / display_total * 100) if display_total > 0 else 0.0
+
+            return {
+                "gpu_available":    True,
+                "gpu_name":         torch.cuda.get_device_name(0),
+                "gpu_vram_used_gb": round(display_used, 2),
+                "gpu_vram_alloc_gb": round(alloc_gb, 2),   # tensors only (thường thấp hơn)
+                "gpu_vram_total_gb": round(display_total, 2),
+                "gpu_vram_pct":     round(pct, 1),
+                "models_in_ram": {
+                    "oop":    len(manager.oop_models),
+                    "normal": len(manager.normal_models),
+                },
+            }
+        except Exception as exc:
+            gpu_log("error", "server", "gpu_stats", f"GPU stats error: {exc}")
+            return {
+                "gpu_available": False,
+                "gpu_vram_used_gb": 0.0,
+                "gpu_vram_total_gb": 4.0,
+                "gpu_vram_pct": 0.0,
+                "error": str(exc),
+            }
+
+    # ------------------------------------------------------------------
     # POST /api/predict/roberta
     # ------------------------------------------------------------------
     @app.post("/api/predict/roberta")

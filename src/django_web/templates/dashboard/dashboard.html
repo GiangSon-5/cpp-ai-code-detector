@@ -200,11 +200,25 @@ function fetchMetrics() {
       const vramSub = document.getElementById('kpi-vram-sub');
       if (vramEl) {
         if (d.gpu_vram_used_gb != null) {
-          const total = d.gpu_vram_total_gb ? '/' + d.gpu_vram_total_gb + ' GB' : '';
-          vramEl.textContent = d.gpu_vram_used_gb + ' GB' + total;
-          if (vramSub) vramSub.textContent = (d.gpu_vram_pct || 0).toFixed(1) + '% utilization';
+          const pct = d.gpu_vram_pct || 0;
+          if (pct >= 85) {
+            vramEl.textContent = "Warning";
+            vramEl.style.color = "#fb923c"; // Orange/Yellow
+            if (vramSub) {
+              vramSub.textContent = "GPU VRAM usage High (" + pct.toFixed(1) + "%)";
+              vramSub.style.color = "#f87171"; // Red for subtext warning
+            }
+          } else {
+            vramEl.textContent = "OK";
+            vramEl.style.color = "#4ade80"; // Green
+            if (vramSub) {
+              vramSub.textContent = "GPU VRAM usage OK";
+              vramSub.style.color = "#4ade80";
+            }
+          }
         } else {
-          vramEl.textContent = d.gpu_available ? 'Loading...' : 'No GPU';
+          vramEl.textContent = d.gpu_available ? 'Ready' : 'No GPU';
+          if (vramSub) vramSub.textContent = 'Hardware Status';
         }
       }
 
