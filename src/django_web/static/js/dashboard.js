@@ -1,5 +1,5 @@
 /* ==============================================================
-   CodeGuard AI — dashboard.js
+   AI code detection system — dashboard.js
    Admin: Chart.js live polling, metrics updates
    ============================================================== */
 

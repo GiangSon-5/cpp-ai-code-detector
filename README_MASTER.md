@@ -13,194 +13,130 @@
 
 ### Kiến trúc Triển khai (Hybrid Local-Cloud)
 
-Do mô hình AI (RoBERTa Ensemble + Qwen 7B) yêu cầu khoảng **14GB-16GB VRAM**, hệ thống được thiết kế chạy theo mô hình **Hybrid** để tối ưu hóa tài nguyên phần cứng hiện có (Laptop 4GB VRAM):
+Hệ thống được thiết kế linh hoạt chạy theo mô hình **Hybrid** để tối ưu hóa tài nguyên phần cứng, chia thành 4 dịch vụ cốt lõi:
 
-1. **Local (Laptop):** Chạy Web tầng giao diện, Cơ sở dữ liệu và Điều phối.
-2. **Google Colab (Cloud GPU):** Chạy "Não bộ" AI và Inference.
-
-```
+```text
 ┌────────────────────────────────────────────────────────────────────┐
 │              🖥️  LOCAL MACHINE (Laptop / PC)                       │
 │                                                                    │
 │  ┌────────────────────────┐      ┌────────────┐  ┌────────────────┐ │
-│  │  🌐 DJANGO WEB APP     │      │ Redpanda   │  │ Celery Workers │ │
-│  │  (Auth, Dash, Bronze)  │      │ (Broker)   │  │ (ETL, S3 Push) │ │
+│  │  🌐 DJANGO WEB APP     │      │ Redis/     │  │ Celery Workers │ │
+│  │  (Auth, Dash, Bronze)  │      │ Redpanda   │  │ (ETL, S3 Push) │ │
 │  └───────────┬────────────┘      └─────┬──────┘  └───────┬────────┘ │
 │              │                         │                 │         │
 │              └───────────────┬─────────┴─────────────────┘         │
 │                              │                                     │
-│      PostgreSQL (Gold) ◄─────┘        DagsHub S3 (Data Lake) ──┐   │
-└──────────────────────────────┬─────────────────────────────────│───┘
-                               │ HTTPS (ngrok tunnel)            │
-                               ▼                                 │
+│  ┌────────────────────────┐  │   PostgreSQL (Gold) ◄─────┘         │
+│  │ ⚡ FastAPI Orchestrator│◄─┘                                     │
+│  │    (Port 8001)         │           DagsHub S3 (Data Lake) ──┐   │
+│  └───────────┬────────────┘                                    │   │
+└──────────────┼─────────────────────────────────────────────────│───┘
+               │ HTTPS (ngrok tunnel) hoặc localhost             │
+               ▼                                                 │
 ┌────────────────────────────────────────────────────────────────│───┐
-│              ☁️  GOOGLE COLAB (Primary GPU Host)               │   │
+│              ☁️ GPU RUNTIME (Local GPU hoặc Google Colab)       │   │
 │                                                                │   │
 │  ┌──────────────────────────────────────────────────────────┐  │   │
-│  │  ⚡ FASTAPI AI SERVICE (Phần não bộ AI)                  │  │   │
-│  │  LangGraph Agent │ RoBERTa Ensemble │ Qwen 2.5 │ LIG/SHAP │  │   │
-│  │  Model Weights (Load từ Google Drive)                    │  │   │
+│  │  🔧 LOCAL GPU SERVER (Port 8002) HOẶC COLAB FASTAPI       │  │   │
+│  │  LangGraph Agent │ RoBERTa Ensemble │ Qwen 2.5 │ SHAP/LIG│  │   │
+│  │  Model Weights (~14-16GB VRAM)                           │  │   │
 │  └──────────────────────────────────────────────────────────┘  │   │
-│              ngrok tunnel expose port 8000                     │   │
 └────────────────────────────────────────────────────────────────│───┘
                                                                  │
       DVC / MLflow Tracking ◄────────────────────────────────────┘
 ```
 
-> **Lưu ý:** Việc tách rời này giúp Laptop không bị treo do tràn VRAM (OOM), đồng thời tận dụng được GPU T4/L4 miễn phí từ Colab cho các phép tính XAI (LIG) tốn kém tài nguyên.
+> **Lưu ý:** Việc tách rời Orchestrator và GPU Runtime giúp Laptop (VRAM thấp) không bị treo do tràn bộ nhớ (OOM). Có thể chạy Local GPU Server nếu có sẵn GPU mạnh, hoặc dùng Google Colab (GPU T4/L4 miễn phí) cho phần xử lý nặng.
 
 ---
 
 ## Tech Stack & Architecture Decisions
 
-### Công nghệ đã chốt
-
 | Layer | Công nghệ | Lý do chọn |
 |-------|-----------|-------------|
-| **Web & Admin** | Django 5.x + Django ORM | CRUD chuẩn ACID, Admin UI tự động, Session/Auth có sẵn |
-| **AI Serving** | FastAPI (Async) + Pydantic v2 | Non-blocking I/O cho inference nặng, validation tự động |
-| **AI Runtime** | ONNX Runtime + PyTorch | ONNX cho production (2-5x faster), PyTorch cho dev/train |
-| **GPU Host** | **Google Colab (Primary)** | Chạy AI Engine (RoBERTa + Qwen) vì cần >14GB VRAM |
-| **Local Host** | **Laptop/PC** | Chạy Django, DB, Redpanda (nhẹ, không cần GPU mạnh) |
-| **LLM Router** | LangGraph + Qwen 2.5 Coder 7B | Agentic workflow: Router → Analyzer → Judge → Critique |
-| **Database** | PostgreSQL 16 | ACID, JSON field cho Gold layer, full-text search |
-| **Message Broker** | Redpanda | Kafka-compatible, nhẹ hơn 10x RAM, kiêm Cache layer |
-| **Background Jobs** | Celery + Redpanda (as broker) | Async logging, ETL push to Data Lake |
-| **Data Lake** | DagsHub S3-compatible | Offload Bronze/Silver data khỏi local RAM. Tích hợp sẵn DVC & MLflow |
-| **Feature Store** | Parquet trên DagsHub S3 | Columnar format, tối ưu cho pandas/LightGBM training |
-| **XAI** | SHAP + Layer Integrated Gradients (LIG) | Giải thích từng token/feature ảnh hưởng đến dự đoán |
-| **Infra** | Ubuntu + MicroK8s (GPU, DNS) | Single-node K8s, nhẹ, hỗ trợ GPU passthrough |
-| **Tunneling** | Cloudflare Tunnels | Public web (production). ngrok chỉ dùng cho Colab fallback |
-| **IaC** | Terraform (K8s resources) + Ansible (OS/Driver) | Terraform quản lý Helm charts, Ansible cài đặt bare-metal |
-| **Monitoring** | Prometheus + Grafana + Loki | Metrics (Prometheus), Dashboard (Grafana), Logs (Loki) |
-| **CI/CD** | GitHub Actions | Auto test, build Docker image, deploy to MicroK8s |
+| **Web & Admin** | Django 5.x + Django ORM | CRUD chuẩn ACID, MLOps Dashboard (6 views) |
+| **AI Orchestration**| FastAPI (Async) + Pydantic v2 | Điều phối pipeline AI, SSE streaming realtime |
+| **AI Runtime** | ONNX Runtime + PyTorch | ONNX cho production (2-5x faster), PyTorch cho dev |
+| **LLM Router** | LangGraph + Qwen 2.5 Coder 7B | Agentic workflow 4 node: Router → Analyzer → Judge → Critique |
+| **Database** | PostgreSQL 16 | ACID, JSON field cho Gold layer prediction |
+| **Broker** | Redis & Redpanda | Redis (Celery broker), Redpanda (Event streaming) |
+| **Background Jobs** | Celery | Async ETL (Bronze → Silver), S3 Push |
+| **Data Lake** | DagsHub S3-compatible | Offload dữ liệu, DVC versioning + MLflow tracking |
+| **Feature Store** | Parquet trên DagsHub S3 | Lưu ML features & DL tokens, tối ưu cho training |
+| **XAI** | SHAP + Layer Integrated Gradients | Giải thích Feature (SHAP) & Token (LIG) |
+| **Container/K8s** | Docker Compose / MicroK8s | DB/Broker chạy Docker, Production K8s hỗ trợ GPU |
 
-### Quyết định quan trọng: Offload Data Lake lên DagsHub S3
+### Quyết định quan trọng: Medallion Data Architecture
 
-```
-❌ KHÔNG LÀM: Lưu Bronze/Silver raw data trên local disk
-   → Tiêu tốn RAM/SSD, không version control, khó scale
-
-✅ ĐÃ CHỌN: Push Bronze/Silver lên DagsHub S3 via Celery background task
-   → Local chỉ giữ PostgreSQL (Gold) + Model weights
-   → DagsHub cung cấp DVC (data versioning) + MLflow (experiment tracking) miễn phí
-   → Tiết kiệm 60-80% storage local
-```
+Hệ thống áp dụng kiến trúc dữ liệu 3 tầng (Medallion) để xử lý lượng lớn dữ liệu huấn luyện:
+- **🥉 Bronze (DagsHub S3 + PostgreSQL):** Lưu mã nguồn thô (JSONL).
+- **🥈 Silver (DagsHub S3):** Lưu đặc trưng đã trích xuất (32 Features cho ML, 512 Tokens cho DL) dưới dạng `.parquet`.
+- **🥇 Gold (PostgreSQL):** Lưu kết quả dự đoán cuối cùng (Predictions, XAI Fingerprints) phục vụ Dashboard thống kê.
 
 ---
 
 ## Project Structure
 
-```
-C:\Users\Admin\Desktop\New folder\
+```text
+LVTN-main/
 │
 ├── README_MASTER.md                          # 📋 Tài liệu tổng thể (file này)
 ├── metadata_implementation_plan.md           # 📊 Kế hoạch Medallion Data Architecture
 │
 ├── src/                                      # 🏗️ SOURCE CODE CHÍNH
-│   ├── django_web/                           # 🌐 Django Web Application
-│   │   ├── apps/
-│   │   │   ├── accounts/                     # User Authentication & Profile
-│   │   │   ├── submissions/                  # Bronze Layer CRUD (Code submissions)
-│   │   │   └── dashboard/                    # Gold Layer Analytics & Visualization
-│   │   ├── templates/                        # Jinja2 HTML templates
-│   │   └── static/                           # CSS/JS/Images
+│   ├── django_web/                           # 🌐 Django Web & Dashboard
+│   │   └── apps/
+│   │       ├── accounts/                     # Auth & Profile
+│   │       ├── submissions/                  # Bronze Layer CRUD
+│   │       └── dashboard/                    # Admin MLOps (overview, metrics, infra, db, users, models)
 │   │
-│   ├── fastapi_service/                      # ⚡ FastAPI AI Serving Microservice
-│   │   ├── routers/                          # API endpoints (predict, health, stream)
-│   │   ├── models/                           # SQLAlchemy Async ORM models (Gold)
-│   │   ├── schemas/                          # Pydantic request/response schemas
-│   │   ├── repositories/                     # Repository Pattern (CRUD abstraction)
-│   │   ├── services/                         # Business logic orchestration
-│   │   ├── core/                             # Config, DB session, dependencies
-│   │   └── engine/                           # AI Engine (RoBERTa, LIG, Router logic)
+│   ├── fastapi_service/                      # ⚡ FastAPI Orchestrator
+│   │   ├── routers/                          # API endpoints (SSE, health)
+│   │   ├── engine/                           # AI Engine Orchestration
+│   │   └── services/
+│   │       └── agent_service.py              # LangGraph 4-node pipeline
 │   │
-│   ├── colab_runtime/                        # ☁️ GOOGLE COLAB GPU RUNTIME
-│   │   ├── notebooks/                        # Jupyter notebooks (.ipynb)
-│   │   │   ├── 01_inference_server.ipynb     # 🎯 Chạy FastAPI + ngrok trên Colab
-│   │   │   ├── 02_retrain_pipeline.ipynb     # Tái huấn luyện trên Colab GPU
-│   │   │   └── 03_export_onnx.ipynb          # Export ONNX cho production
-│   │   └── scripts/                          # Python modules (import từ notebook)
-│   │       ├── engine.py                     # RoBERTa, LIG, heuristic (từ extract_1.py)
-│   │       ├── agent.py                      # LangGraph workflow (từ extract_1.py)
-│   │       ├── server.py                     # FastAPI + SSE + ngrok (từ extract_1.py)
-│   │       ├── llm_handler.py                # Qwen LLM + Perplexity (từ extract_1.py)
-│   │       ├── feature_extractor.py          # CppFeatureExtractorV8 (từ hybrid notebook)
-│   │       ├── hybrid_evaluator.py           # Fusion + SHAP (từ hybrid notebook)
-│   │       └── config.py                     # API keys, paths, thresholds
+│   ├── local_gpu_server/                     # 🔧 Chạy inference trên GPU (Port 8002)
 │   │
-│   ├── celery_workers/                       # 🔄 Celery Background Tasks
-│   │   └── tasks/                            # Task definitions (log, ETL, push S3)
+│   ├── celery_workers/                       # 🔄 Background tasks (ETL, Push S3)
 │   │
-│   └── data_pipeline/                        # 📦 ETL Pipeline (Medallion Architecture)
-│       ├── bronze_to_silver/                 # Raw → Features/Tokens transformation
-│       ├── silver_to_gold/                   # Aggregation → PostgreSQL Gold tables
-│       └── retraining/                       # Closed-loop retraining orchestration
-│
-├── infrastructure/                           # 🏛️ INFRASTRUCTURE AS CODE
-│   ├── terraform/                            # Terraform configurations
-│   │   ├── modules/
-│   │   │   ├── k8s/                          # MicroK8s resource definitions
-│   │   │   └── helm/                         # Helm chart releases (PostgreSQL, Redpanda, Grafana)
-│   │   └── environments/
-│   │       ├── dev/                           # Dev environment variables
-│   │       └── prod/                          # Production environment variables
+│   ├── data_pipeline/                        # 📦 Medallion ETL (Bronze→Silver→Gold)
 │   │
-│   ├── ansible/                              # Ansible automation
-│   │   ├── playbooks/                        # Main playbook files
-│   │   ├── roles/
-│   │   │   ├── nvidia_driver/                # NVIDIA Driver + CUDA installation
-│   │   │   ├── microk8s/                     # MicroK8s setup + GPU addon
-│   │   │   └── cloudflare_tunnel/            # Cloudflare Tunnel daemon
-│   │   └── inventory/                        # Host definitions
-│   │
-│   └── k8s_manifests/                        # Raw Kubernetes manifests
-│       ├── base/                             # Base manifests (Kustomize)
-│       └── overlays/
-│           ├── dev/                           # Dev overrides
-│           └── prod/                          # Prod overrides
+│   └── shared/                               # 🛠️ Common modules
+│       ├── config.py, database.py, logger.py, data_contracts.py
 │
-├── monitoring/                               # 📈 OBSERVABILITY STACK
-│   ├── prometheus/                           # Prometheus config & rules
-│   ├── grafana/
-│   │   ├── dashboards/                       # Pre-built dashboard JSON
-│   │   └── provisioning/                     # Auto-provisioning config
-│   └── loki/                                 # Log aggregation config
-│
-├── .github/
-│   └── workflows/                            # 🚀 GitHub Actions CI/CD pipelines
-│
-├── tests/                                    # 🧪 TEST SUITES
-│   ├── unit/                                 # Unit tests (pytest)
-│   ├── integration/                          # Integration tests (API + DB)
-│   └── e2e/                                  # End-to-end tests
-│
-├── docs/                                     # 📚 ADDITIONAL DOCUMENTATION
-│   ├── architecture/                         # Architecture diagrams & ADRs
-│   └── api/                                  # OpenAPI/Swagger exports
-│
-├── data_lake/                                # 📦 LOCAL DATA LAKE (synced to DagsHub S3)
-│   ├── bronze/                               # Raw code submissions (.jsonl)
-│   ├── silver/
-│   │   ├── ml/                               # LightGBM features (.parquet)
-│   │   └── dl/                               # RoBERTa tokens (.parquet)
-│   └── gold/                                 # Exported predictions (.parquet)
+├── data_lake/                                # 📦 LOCAL DATA (Sync DagsHub S3)
+│   ├── bronze/                               # Raw code (.jsonl)
+│   ├── silver/                               # Features/Tokens (.parquet)
+│   └── gold/                                 # Predictions
 │
 ├── ml_models/                                # 🧠 MODEL ARTIFACTS
 │   ├── onnx/                                 # Exported ONNX models
 │   └── checkpoints/                          # PyTorch checkpoints (dev only)
 │
-└── legacy_code/                              # 📁 ORIGINAL CODE (Read-Only Archive)
-    ├── app.py                                # Streamlit frontend (original)
-    ├── extract_1.py                          # FastAPI + LangGraph backend (original)
-    └── extracted_with_markdown.py            # Hybrid model evaluation (original)
+├── System architecture/                      # 📚 TÀI LIỆU NỘI BỘ MỚI
+│   ├── 00_system_overview.md
+│   ├── 01_mlops_pipeline.md
+│   ├── 02_admin_dashboard.md
+│   ├── 03_shared_infrastructure.md
+│   └── 04_operations.md
+│
+├── legacy_code/                              # 📁 ORIGINAL CODE (Read-Only Archive)
+│
+├── infrastructure/                           # 🏛️ Terraform, Ansible, K8s
+├── monitoring/                               # 📈 Prometheus, Grafana, Loki
+├── .github/workflows/                        # 🚀 CI/CD pipelines
+├── tests/                                    # 🧪 Unit, Integration, E2E
+├── docker-compose.yml                        # PostgreSQL, Redis, Redpanda
+├── Makefile                                  # Lệnh `make dev`
+└── dev.sh                                    # tmux 2x2 startup script
 ```
 
 ---
 
 ## Pipeline Architecture — Luồng Dữ liệu Tổng thể
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          👤 USER INPUT                                   │
 │                  Paste/Upload C++ code (.cpp/.c)                         │
@@ -213,7 +149,7 @@ C:\Users\Admin\Desktop\New folder\
 │  1. User Authentication (Session/JWT)                                    │
 │  2. Validate Input → Base64 encode                                       │
 │  3. BronzeRepository.save() → PostgreSQL (bronze_submissions)            │
-│  4. Publish message to Redpanda Topic: `code.submitted`                  │
+│  4. Publish message to Broker: `code.submitted`                          │
 │                                                                          │
 └──────────────────────────────┬──────────────────────────────────────────┘
                                │
@@ -221,8 +157,8 @@ C:\Users\Admin\Desktop\New folder\
                  │             │             │
                  ▼             ▼             ▼
 ┌────────────────────┐ ┌─────────────┐ ┌─────────────────────────┐
-│  ⚡ FASTAPI         │ │ 🔄 CELERY   │ │  📦 REDPANDA            │
-│  AI SERVICE         │ │  WORKER     │ │  Message Broker         │
+│  ⚡ FASTAPI         │ │ 🔄 CELERY   │ │  📦 REDIS/REDPANDA      │
+│  ORCHESTRATOR       │ │  WORKER     │ │  Message Broker         │
 │                     │ │             │ │                         │
 │  ┌───────────────┐  │ │ Task 1:     │ │  Topics:                │
 │  │ LangGraph     │  │ │ Push raw    │ │  • code.submitted       │
@@ -231,18 +167,17 @@ C:\Users\Admin\Desktop\New folder\
 │  │ ① Router      │  │ │ (Bronze)    │ │                         │
 │  │   ↓           │  │ │             │ │  Cache Layer:           │
 │  │ ② Analyzer    │  │ │ Task 2:     │ │  • code_hash → result   │
-│  │   (RoBERTa    │  │ │ Extract     │ │    (TTL: 24h)           │
-│  │    Ensemble   │  │ │ features →  │ └─────────────────────────┘
-│  │    + LIG)     │  │ │ Push to     │
-│  │   ↓           │  │ │ DagsHub S3  │
-│  │ ③ Judge       │  │ │ (Silver)    │
-│  │   (Self-      │  │ │             │
-│  │    Correct)   │  │ │ Task 3:     │
-│  │   ↓           │  │ │ Write Gold  │
-│  │ ④ Critique    │  │ │ prediction  │
-│  │   (Map-Reduce │  │ │ to Postgres │
-│  │    LLM)       │  │ └─────────────┘
-│  └───────────────┘  │
+│  │   (Local GPU  │  │ │ Extract     │ │    (TTL: 24h)           │
+│  │    hoặc Colab)│  │ │ features →  │ └─────────────────────────┘
+│  │   ↓           │  │ │ Push to     │
+│  │ ③ Judge       │  │ │ DagsHub S3  │
+│  │   (Self-      │  │ │ (Silver)    │
+│  │    Correct)   │  │ │             │
+│  │   ↓           │  │ │ Task 3:     │
+│  │ ④ Critique    │  │ │ Write Gold  │
+│  │   (Map-Reduce │  │ │ prediction  │
+│  │    LLM)       │  │ │ to Postgres │
+│  └───────────────┘  │ └─────────────┘
 │                     │
 │  SSE Streaming      │
 │  Response → User    │
@@ -277,7 +212,7 @@ C:\Users\Admin\Desktop\New folder\
 
 ### Closed-Loop Retraining Pipeline
 
-```
+```text
 DagsHub S3 (Silver Parquet)
         │
         ▼
@@ -291,73 +226,87 @@ DagsHub S3 (Silver Parquet)
 │  5. If improved → Export     │
 │     ONNX → Push to Registry  │
 │  6. Redpanda: retrain.done   │
-│  7. FastAPI hot-reload model │
+│  7. API Server hot-reload    │
 └─────────────────────────────┘
 ```
 
 ---
 
-## Output JSON Schema (Chiết xuất từ code cũ)
+## Output JSON Schema
 
-Trường dữ liệu output được chiết xuất trực tiếp từ `extract_1.py` (lines 465-470) và `app.py` (lines 177-186):
+Dữ liệu trả về từ API (SSE Streaming) và được lưu vào Gold layer:
 
 ```json
 {
   "final_pred": "AI GENERATED",
   "final_score": 0.8742,
   "model_used": "C++ OOP Model",
+  "dl_score": 0.91,
+  "ml_score": 0.72,
+  "hybrid_score": 0.83,
   "perplexity": 2.34,
+  "max_ppl": 15.42,
+  "burstiness": 3.85,
   "is_ambiguous": false,
   "total_tokens": 1024,
   "total_chunks": 2,
   "global_critique": "The code exhibits consistent AI-generated patterns...",
-  "global_html": "<html>...(LIG heatmap visualization)...</html>",
   "chunks": [
     {
       "index": 1,
       "score": 0.9123,
       "label": "AI",
-      "top_ai": ["'iostream'", "'endl'", "'return'"],
-      "top_hu": ["'ptr'", "'idx'"],
-      "snippet": "#include <iostream>\nint main() { ... }",
-      "html": "<html>...(chunk-level heatmap)...</html>",
-      "critique": "This chunk shows typical AI-generated boilerplate patterns..."
+      "top_ai": ["iostream", "endl", "return"],
+      "top_hu": ["ptr", "idx"],
+      "snippet": "#include <iostream>...",
+      "critique": "This chunk shows typical AI-generated boilerplate..."
     }
-  ]
+  ],
+  "fingerprint": { 
+      "features": [...],
+      "shap_values": [...]
+  }
 }
 ```
 
 ---
 
-## Quick Start (Hybrid Mode)
+## Quick Start (Local Development)
 
-### 1. Chuẩn bị Local (Laptop)
-```bash
-# Chạy các service hỗ trợ (DB, Broker)
-docker-compose up -d
-cd src/django_web && python manage.py migrate && python manage.py runserver
-```
+### Yêu cầu tiên quyết
+- Python 3.10+, Conda/Mamba
+- Docker & Docker Compose
+- Tmux (cho `dev.sh`)
 
-### 2. Chuẩn bị AI Cloud (Google Colab)
-- Mở `src/colab_runtime/notebooks/01_inference_server.ipynb` trên Colab.
-- Chọn Runtime: **GPU (T4 hoặc L4)**.
-- Chạy các cell → Nhận URL ngrok (VD: `https://xyz.ngrok.io`).
-- Cấu hình trong Django `.env`: `FASTAPI_AI_URL=https://xyz.ngrok.io`.
+### Khởi động (Chỉ 2 bước)
 
-### 3. Kiểm tra
-- Truy cập `localhost:8000` (Django).
-- Paste code C++ và ấn Submit.
-- Django sẽ gọi qua ngrok tới Colab để xử lý AI.
+1. **Khởi động DB & Brokers (Docker):**
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Khởi động toàn bộ dịch vụ (Tmux 2x2 pane):**
+   ```bash
+   make dev
+   # Hoặc chạy script bash: ./dev.sh
+   ```
+
+`make dev` sẽ tự động tạo một phiên Tmux với 4 cửa sổ chạy song song:
+- **Pane 0**: FastAPI Orchestrator (Port 8001)
+- **Pane 1**: Django Web Dashboard (Port 8000)
+- **Pane 2**: Celery Worker (Background tasks)
+- **Pane 3**: Local GPU Server (Port 8002)
+
+> Truy cập **http://localhost:8000** để xem giao diện web và **http://localhost:8000/dashboard/** cho MLOps Admin.
 
 ---
 
-## Tài liệu tham chiếu
+## Hệ thống Tài liệu Nội bộ
 
-| File | Vị trí | Mô tả |
-|------|--------|--------|
-| `metadata_implementation_plan.md` | Root | Medallion Data Architecture chi tiết |
-| `*_SPEC.md` | Mỗi module folder | Đặc tả kỹ thuật cho Developer |
-| `*_SRS.md` | Mỗi module folder | Đặc tả nghiệp vụ / Use Case |
-| `extract_1.py` | `legacy_code/` | Code gốc FastAPI + LangGraph |
-| `app.py` | `legacy_code/` | Code gốc Streamlit frontend |
-| `extracted_with_markdown.py` | `legacy_code/` | Code gốc Hybrid model evaluation |
+Vui lòng tham khảo các thư mục và file tài liệu sau để nắm bắt chi tiết:
+1. `System architecture/00_system_overview.md` - Tổng quan kiến trúc Hybrid & Medallion.
+2. `System architecture/01_mlops_pipeline.md` - Chi tiết LangGraph 4-node và các model (RoBERTa, Qwen, LightGBM).
+3. `System architecture/02_admin_dashboard.md` - Hệ thống Dashboard (Metrics, Infra, VRAM Monitoring).
+4. `System architecture/03_shared_infrastructure.md` - Core Utils (Logger, DB Session, Config, Broker).
+5. `System architecture/04_operations.md` - Vận hành, Debugging và Deployment.
+6. `metadata_implementation_plan.md` - (Gốc) Kế hoạch triển khai Medallion Data Architecture ban đầu.

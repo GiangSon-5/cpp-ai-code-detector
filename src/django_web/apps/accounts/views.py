@@ -121,7 +121,7 @@ def register_view(request):
                 role="student",
             )
             login(request, user)
-            messages.success(request, "Đăng ký thành công! Chào mừng bạn đến với CodeGuard AI.")
+            messages.success(request, "Đăng ký thành công! Chào mừng bạn đến với AI code detection system.")
             logger.info(
                 module="accounts.views",
                 function="register_view",
