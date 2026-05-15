@@ -50,6 +50,8 @@ logs/
 *.h5
 *.pth
 *.pkl
+*.safetensors
 models/
+local_models/
 data/
 datasets/
