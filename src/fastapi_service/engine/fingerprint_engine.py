@@ -202,6 +202,53 @@ BEHAVIORAL_INSIGHTS: dict[str, dict[str, str]] = {
     },
 }
 
+FEATURE_DISPLAY_NAMES_VN: dict[str, str] = {
+    "comment_ratio": "Mật độ chú thích",
+    "empty_line_ratio": "Tỷ lệ dòng trắng",
+    "avg_line_length": "Độ dài dòng trung bình",
+    "max_line_length": "Độ dài dòng tối đa",
+    "tab_vs_space_ratio": "Tỷ lệ Tab/Space",
+    "trailing_space_ratio": "Khoảng trắng thừa cuối dòng",
+    "brace_style_consistency": "Nhất quán mở ngoặc nhọn",
+    "avg_identifier_length": "Độ dài tên định danh trung bình",
+    "identifier_length_variance": "Biến động độ dài tên định danh",
+    "single_char_var_ratio": "Tỷ lệ biến một ký tự",
+    "unique_identifier_ratio": "Tỷ lệ định danh độc nhất",
+    "keyword_to_identifier_ratio": "Tỷ lệ từ khóa/tên định danh",
+    "avg_cyclomatic_complexity": "Độ phức tạp nhánh điều kiện trung bình",
+    "num_functions": "Số lượng hàm",
+    "avg_function_loc": "Độ dài hàm trung bình",
+    "halstead_volume": "Độ phức tạp thuật toán (Halstead Volume)",
+    "halstead_difficulty": "Độ khó lập trình (Halstead Difficulty)",
+    "halstead_effort": "Công sức lập trình (Halstead Effort)",
+    "halstead_bugs": "Dự báo số lỗi (Halstead Bugs)",
+    "maintainability_index": "Chỉ số dễ bảo trì",
+    "code_to_comment_ratio": "Tỷ lệ Code/Comment",
+    "max_nesting_depth": "Độ sâu lồng nhau tối đa",
+    "total_includes": "Số lượng thư viện import",
+    "has_bits_stdc": "Sử dụng thư viện bits/stdc++.h",
+    "macro_count": "Số lượng Macro khai báo",
+    "modern_cpp_ratio": "Tỷ lệ sử dụng Modern C++",
+    "const_usage_ratio": "Tỷ lệ sử dụng từ khóa const",
+    "has_fast_io": "Tối ưu hóa nhập xuất Fast I/O",
+    "newline_style_ratio": "Nhất quán phong cách xuống dòng",
+    "shannon_entropy": "Độ đa dạng từ vựng (Entropy)",
+    "bigram_entropy": "Độ biến động cặp ký tự",
+    "whitespace_entropy": "Nhất quán khoảng trắng",
+    "class_count": "Số lượng lớp (Class)",
+    "struct_count": "Số lượng cấu trúc (Struct)",
+    "has_inheritance": "Sử dụng tính kế thừa lớp",
+    "access_specifier_ratio": "Tỷ lệ chỉ thị truy cập (OOP)",
+    "virtual_override_ratio": "Tỷ lệ đa hình (virtual/override)",
+    "using_std_ratio": "Sử dụng using namespace std",
+    "try_catch_ratio": "Tỷ lệ khối try-catch bắt lỗi",
+    "raw_pointer_ratio": "Tỷ lệ sử dụng con trỏ thô",
+    "getter_setter_ratio": "Sử dụng Getter/Setter",
+    "std_prefix_ratio": "Sử dụng tiền tố std::",
+    "cpp_cast_ratio": "Tỷ lệ ép kiểu C++ an toàn",
+    "emoji_marker_score": "Sử dụng biểu tượng cảm xúc (Emoji)",
+}
+
 _CATEGORY_MAP: dict[str, str] = {
     f: g
     for g, feats in {
@@ -338,7 +385,7 @@ class FingerprintEngine:
                 )
                 all_features.append(ShapFeature(
                     name=fname,
-                    display_name=fname.replace("_", " ").title(),
+                    display_name=FEATURE_DISPLAY_NAMES_VN.get(fname, fname.replace("_", " ").title()),
                     value=fval,
                     shap_value=sval,
                     direction=direction,
@@ -352,12 +399,59 @@ class FingerprintEngine:
             # 6. Executive summary
             summary = self._make_summary(top5, is_ai)
 
+            # Calculate scorecard groupings (Surface vs Deep)
+            surface_categories = {"Layout & Formatting", "Naming Conventions", "Comment & Style", "Coding Habits"}
+            deep_categories = {"Structural Complexity", "OOP Structure", "Information Theory"}
+
+            total_abs_shap = 0.0
+            surface_abs_shap = 0.0
+            deep_abs_shap = 0.0
+            sum_shap_surface = 0.0
+            sum_shap_deep = 0.0
+
+            for feat in all_features:
+                fname = feat.name
+                sval = feat.shap_value
+                abs_sval = abs(sval)
+                cat = _CATEGORY_MAP.get(fname, "")
+
+                total_abs_shap += abs_sval
+                if cat in surface_categories:
+                    surface_abs_shap += abs_sval
+                    sum_shap_surface += sval
+                elif cat in deep_categories:
+                    deep_abs_shap += abs_sval
+                    sum_shap_deep += sval
+                else:
+                    surface_abs_shap += abs_sval / 2.0
+                    deep_abs_shap += abs_sval / 2.0
+                    sum_shap_surface += sval / 2.0
+                    sum_shap_deep += sval / 2.0
+
+            if total_abs_shap > 0:
+                surface_pct = round((surface_abs_shap / total_abs_shap) * 100, 1)
+                deep_pct = round((deep_abs_shap / total_abs_shap) * 100, 1)
+                total_pct = surface_pct + deep_pct
+                if total_pct > 0:
+                    surface_pct = round((surface_pct / total_pct) * 100, 1)
+                    deep_pct = round(100.0 - surface_pct, 1)
+            else:
+                surface_pct = 50.0
+                deep_pct = 50.0
+
+            surface_label = "Đặc trưng AI" if sum_shap_surface > 0 else "Giống người"
+            deep_label = "Đặc trưng AI" if sum_shap_deep > 0 else "Giống người"
+
             return FingerprintResult(
                 lgbm_score=prob_ai,
                 lgbm_prediction=label,
                 executive_summary=summary,
                 top_features=top5,
                 all_features=all_features,
+                surface_pct=surface_pct,
+                surface_label=surface_label,
+                deep_pct=deep_pct,
+                deep_label=deep_label,
             )
 
         except Exception as exc:
