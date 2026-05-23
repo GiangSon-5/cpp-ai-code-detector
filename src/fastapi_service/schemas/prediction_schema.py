@@ -28,6 +28,9 @@ class AnalyzeResponse(BaseModel):
     max_ppl: float = 0.0
     burstiness: float = 0.0
     is_ambiguous: bool = False
+    ml_dl_conflict: bool = False
+    ml_dl_gap: float = 0.0
+    fusion_applied: bool = False
     total_tokens: int = 0
     total_chunks: int = 0
     global_critique: str = ""

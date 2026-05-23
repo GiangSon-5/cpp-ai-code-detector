@@ -104,4 +104,41 @@ async def test_node_judge_ppl_conflict(agent_service):
     assert result["is_ambiguous"] is True
     assert result["model_switched"] is True
     assert result["new_model_type"] == "NORMAL"
-    assert result["final_score"] == 0.10 # It picked the retry score because |0.2 - 0.5| = 0.3, same as |0.8 - 0.5| = 0.3. Wait, is it?
+    assert result["final_score"] == 0.10
+
+
+@pytest.mark.asyncio
+async def test_node_judge_ml_dl_conflict_with_fusion(agent_service):
+    """Test when DL and ML have a conflict, and DL is in the zone [0.45, 0.75]. Fusion should apply."""
+    result = await agent_service._node_judge(
+        mean_score=0.71,
+        perplexity=2.0,
+        raw_code="int x = 0;",
+        current_model_type="NORMAL",
+        chunks=[],
+        ml_score=0.0
+    )
+    
+    assert result["ml_dl_conflict"] is True
+    assert result["ml_dl_gap"] == 0.71
+    assert result["fusion_applied"] is True
+    # final_score = 0.70 * 0.71 + 0.30 * 0.0 = 0.497
+    assert abs(result["final_score"] - 0.497) < 1e-6
+
+
+@pytest.mark.asyncio
+async def test_node_judge_ml_dl_conflict_no_fusion(agent_service):
+    """Test when DL and ML have a conflict, but DL is very confident (not in [0.45, 0.75]). No fusion."""
+    result = await agent_service._node_judge(
+        mean_score=0.95,
+        perplexity=2.0,
+        raw_code="int x = 0;",
+        current_model_type="NORMAL",
+        chunks=[],
+        ml_score=0.10
+    )
+    
+    assert result["ml_dl_conflict"] is True
+    assert result["ml_dl_gap"] == 0.85
+    assert result["fusion_applied"] is False
+    assert result["final_score"] == 0.95

@@ -36,6 +36,10 @@ class FingerprintResult(BaseModel):
     executive_summary: str = Field("")
     top_features: list[ShapFeature] = Field(default_factory=list)
     all_features: list[ShapFeature] = Field(default_factory=list)
+    surface_pct: float = Field(50.0)
+    surface_label: str = Field("Giống người")
+    deep_pct: float = Field(50.0)
+    deep_label: str = Field("Đặc trưng AI")
 
 
 # =====================================================================
@@ -174,6 +178,9 @@ class GoldPredictionRecord(BaseModel):
     burstiness: float = Field(0.0, description="PPL variance")
     is_ambiguous: bool = False
     retry_count: int = Field(0, ge=0)
+    ml_dl_conflict: bool = False
+    ml_dl_gap: float = 0.0
+    fusion_applied: bool = False
     total_tokens: int = 0
     total_chunks: int = 0
     global_critique: str = ""

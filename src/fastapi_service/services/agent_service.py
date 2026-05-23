@@ -89,6 +89,10 @@ class AgentService:
         max_ppl = ppl_result["max_ppl"]
         burstiness = ppl_result["burstiness"]
 
+        # ─── NODE 5: FINGERPRINT XAI (LightGBM + SHAP) (Moved Up) ──
+        fingerprint_result = self._fingerprint_engine.analyze(raw_code)
+        ml_score = fingerprint_result.lgbm_score if fingerprint_result else 0.5
+
         # ─── NODE 3: JUDGE ────────────────────────────────────────
         judge_result = await self._node_judge(
             mean_score=mean_score,
@@ -96,12 +100,16 @@ class AgentService:
             raw_code=raw_code,
             current_model_type=model_type,
             chunks=chunks,
+            ml_score=ml_score,
         )
         # Judge may have updated values
         mean_score = judge_result["final_score"]
         is_ambiguous = judge_result["is_ambiguous"]
         retry_count = judge_result["retry_count"]
         chunks = judge_result["chunks"]
+        ml_dl_conflict = judge_result.get("ml_dl_conflict", False)
+        ml_dl_gap = judge_result.get("ml_dl_gap", 0.0)
+        fusion_applied = judge_result.get("fusion_applied", False)
         if judge_result.get("model_switched"):
             model_type = judge_result["new_model_type"]
             model_used = f"C++ {model_type} Model"
@@ -127,14 +135,11 @@ class AgentService:
         top_ai_signals = list(dict.fromkeys(top_ai_signals))[:5]
         top_hu_signals = list(dict.fromkeys(top_hu_signals))[:5]
 
-        # ─── NODE 5: FINGERPRINT XAI (LightGBM + SHAP) ───────────
-        fingerprint_result = self._fingerprint_engine.analyze(raw_code)
-
         inference_ms = int((time.perf_counter() - t0) * 1000)
 
         # ─── Compute individual model scores ─────────────────────
         dl_score_raw = round(analyzer_result["mean_score"], 4)  # RoBERTa before judge
-        ml_score_raw = round(fingerprint_result.lgbm_score if fingerprint_result else 0.5, 4)
+        ml_score_raw = round(ml_score, 4)
         hybrid_score_raw = round(0.6 * dl_score_raw + 0.4 * ml_score_raw, 4)
 
         # ─── BUILD RESPONSE ───────────────────────────────────────
@@ -149,6 +154,9 @@ class AgentService:
             max_ppl=round(max_ppl, 2),
             burstiness=round(burstiness, 2),
             is_ambiguous=is_ambiguous,
+            ml_dl_conflict=ml_dl_conflict,
+            ml_dl_gap=ml_dl_gap,
+            fusion_applied=fusion_applied,
             total_tokens=total_tokens,
             total_chunks=total_chunks,
             global_critique=global_critique,
@@ -170,6 +178,9 @@ class AgentService:
             burstiness=round(burstiness, 2),
             is_ambiguous=is_ambiguous,
             retry_count=retry_count,
+            ml_dl_conflict=ml_dl_conflict,
+            ml_dl_gap=ml_dl_gap,
+            fusion_applied=fusion_applied,
             total_tokens=total_tokens,
             total_chunks=total_chunks,
             global_critique=global_critique,
@@ -227,7 +238,11 @@ class AgentService:
         )
 
         # 65-75% — Judge
-        yield SSEProgressEvent(step="judge", progress=68, message="Evaluating confidence...")
+        yield SSEProgressEvent(step="judge", progress=67, message="Running XAI fingerprint...")
+        fingerprint_result = self._fingerprint_engine.analyze(raw_code)
+        ml_score = fingerprint_result.lgbm_score if fingerprint_result else 0.5
+
+        yield SSEProgressEvent(step="judge", progress=69, message="Evaluating confidence...")
 
         judge_result = await self._node_judge(
             mean_score=mean_score,
@@ -235,11 +250,15 @@ class AgentService:
             raw_code=raw_code,
             current_model_type=model_type,
             chunks=chunks,
+            ml_score=ml_score,
         )
         mean_score = judge_result["final_score"]
         is_ambiguous = judge_result["is_ambiguous"]
         retry_count = judge_result["retry_count"]
         chunks = judge_result["chunks"]
+        ml_dl_conflict = judge_result.get("ml_dl_conflict", False)
+        ml_dl_gap = judge_result.get("ml_dl_gap", 0.0)
+        fusion_applied = judge_result.get("fusion_applied", False)
         if judge_result.get("model_switched"):
             model_type = judge_result["new_model_type"]
             model_used = f"C++ {model_type} Model"
@@ -262,17 +281,14 @@ class AgentService:
             t for c in chunks for t in c.top_hu
         ))[:5]
 
-        yield SSEProgressEvent(step="critique", progress=90, message="Generating XAI fingerprint...")
-
-        # ─── NODE 5: FINGERPRINT XAI ──────────────────────────────
-        fingerprint_result = self._fingerprint_engine.analyze(raw_code)
+        yield SSEProgressEvent(step="critique", progress=90, message="Finalizing results...")
 
         # 100% — Final result
         inference_ms = int((time.perf_counter() - t0) * 1000)
 
         # Compute individual model scores
         dl_score_raw = round(analyzer_result["mean_score"], 4)
-        ml_score_raw = round(fingerprint_result.lgbm_score if fingerprint_result else 0.5, 4)
+        ml_score_raw = round(ml_score, 4)
         hybrid_score_raw = round(0.6 * dl_score_raw + 0.4 * ml_score_raw, 4)
 
         final = AnalyzeResponse(
@@ -286,6 +302,9 @@ class AgentService:
             max_ppl=round(max_ppl, 2),
             burstiness=round(burstiness, 2),
             is_ambiguous=is_ambiguous,
+            ml_dl_conflict=ml_dl_conflict,
+            ml_dl_gap=ml_dl_gap,
+            fusion_applied=fusion_applied,
             total_tokens=analyzer_result["total_tokens"],
             total_chunks=analyzer_result["total_chunks"],
             global_critique=global_critique,
@@ -356,6 +375,7 @@ class AgentService:
         raw_code: str,
         current_model_type: str,
         chunks: list[ChunkResult],
+        ml_score: Optional[float] = None,
     ) -> dict[str, Any]:
         """Node ③: Self-correction logic.
 
@@ -421,6 +441,26 @@ class AgentService:
                     error=f"Self-correction failed: {exc}",
                 )
 
+        # --- THÊM MỚI: Kiểm tra xung đột DL-ML ---
+        ml_dl_conflict = False
+        ml_dl_gap = 0.0
+        fusion_applied = False
+        if ml_score is not None:
+            gap = abs(final_score - ml_score)
+            ml_dl_conflict = gap > 0.70  # ngưỡng mâu thuẫn nghiêm trọng
+            ml_dl_gap = round(gap, 3)
+
+            # Chỉ can thiệp khi DL không quá tự tin (tránh ML kéo sai)
+            if ml_dl_conflict and 0.45 <= final_score <= 0.75:
+                final_score = 0.70 * final_score + 0.30 * ml_score
+                fusion_applied = True
+                logger.info(
+                    module="agent_service",
+                    function="_node_judge",
+                    message=f"Controlled Adaptive Fusion applied: "
+                            f"DL={mean_score:.4f}, ML={ml_score:.4f}, Fusion Score={final_score:.4f}",
+                )
+
         return {
             "final_score": final_score,
             "is_ambiguous": is_ambiguous,
@@ -428,6 +468,9 @@ class AgentService:
             "model_switched": model_switched,
             "new_model_type": new_model_type,
             "chunks": chunks,
+            "ml_dl_conflict": ml_dl_conflict,
+            "ml_dl_gap": ml_dl_gap,
+            "fusion_applied": fusion_applied,
         }
 
     @AppLogger.log_function(module="agent_service")
