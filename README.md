@@ -79,57 +79,88 @@ Hệ thống áp dụng kiến trúc dữ liệu 3 tầng (Medallion) để xử
 
 ```text
 LVTN-main/
-│
-├── README_MASTER.md                          # 📋 Tài liệu tổng thể (file này)
-├── metadata_implementation_plan.md           # 📊 Kế hoạch Medallion Data Architecture
-│
-├── src/                                      # 🏗️ SOURCE CODE CHÍNH
-│   ├── django_web/                           # 🌐 Django Web & Dashboard
-│   │   └── apps/
-│   │       ├── accounts/                     # Auth & Profile
-│   │       ├── submissions/                  # Bronze Layer CRUD
-│   │       └── dashboard/                    # Admin MLOps (overview, metrics, infra, db, users, models)
-│   │
-│   ├── fastapi_service/                      # ⚡ FastAPI Orchestrator
-│   │   ├── routers/                          # API endpoints (SSE, health)
-│   │   ├── engine/                           # AI Engine Orchestration
-│   │   └── services/
-│   │       └── agent_service.py              # LangGraph 4-node pipeline
-│   │
-│   ├── local_gpu_server/                     # 🔧 Chạy inference trên GPU (Port 8002)
-│   │
-│   ├── celery_workers/                       # 🔄 Background tasks (ETL, Push S3)
-│   │
-│   ├── data_pipeline/                        # 📦 Medallion ETL (Bronze→Silver→Gold)
-│   │
-│   └── shared/                               # 🛠️ Common modules
-│       ├── config.py, database.py, logger.py, data_contracts.py
-│
-├── data_lake/                                # 📦 LOCAL DATA (Sync DagsHub S3)
-│   ├── bronze/                               # Raw code (.jsonl)
-│   ├── silver/                               # Features/Tokens (.parquet)
-│   └── gold/                                 # Predictions
-│
-├── ml_models/                                # 🧠 MODEL ARTIFACTS
-│   ├── onnx/                                 # Exported ONNX models
-│   └── checkpoints/                          # PyTorch checkpoints (dev only)
-│
-├── System architecture/                      # 📚 TÀI LIỆU NỘI BỘ MỚI
-│   ├── 00_system_overview.md
-│   ├── 01_mlops_pipeline.md
-│   ├── 02_admin_dashboard.md
-│   ├── 03_shared_infrastructure.md
-│   └── 04_operations.md
-│
-├── legacy_code/                              # 📁 ORIGINAL CODE (Read-Only Archive)
-│
-├── infrastructure/                           # 🏛️ Terraform, Ansible, K8s
-├── monitoring/                               # 📈 Prometheus, Grafana, Loki
-├── .github/workflows/                        # 🚀 CI/CD pipelines
-├── tests/                                    # 🧪 Unit, Integration, E2E
-├── docker-compose.yml                        # PostgreSQL, Redis, Redpanda
-├── Makefile                                  # Lệnh `make dev`
-└── dev.sh                                    # tmux 2x2 startup script
+|
+|-- README.md                                 # Tai lieu tong quan du an
+|-- ARCHITECTURE_MAP.md                       # Ban do kien truc va dieu huong thu muc
+|-- metadata_implementation_plan.md           # Ke hoach Medallion Data Architecture
+|-- requirements.txt                          # Python dependencies
+|-- docker-compose.yml                        # PostgreSQL, Redis, Redpanda
+|-- Makefile                                  # Lenh khoi dong moi truong dev
+|-- dev.sh                                    # Script startup tmux 2x2
+|-- manage.py                                 # Django entrypoint
+|-- app.py                                    # Entrypoint/phu tro local run
+|
+|-- src/                                      # Source code chinh
+|   |-- django_web/                           # Django web app va dashboard
+|   |   |-- apps/
+|   |   |   |-- accounts/                     # Auth, profile
+|   |   |   |-- submissions/                  # Submission/Bronze CRUD
+|   |   |   `-- dashboard/                    # Admin dashboard va metrics
+|   |   |-- templates/
+|   |   |-- static/
+|   |   |-- settings.py
+|   |   |-- urls.py
+|   |   `-- wsgi.py
+|   |
+|   |-- fastapi_service/                      # FastAPI orchestrator
+|   |   |-- core/
+|   |   |-- engine/
+|   |   |-- repositories/
+|   |   |-- routers/                          # API endpoints, SSE, health
+|   |   |-- schemas/
+|   |   |-- services/
+|   |   |   `-- agent_service.py              # LangGraph pipeline
+|   |   `-- main.py
+|   |
+|   |-- local_gpu_server/                     # GPU inference server
+|   |   |-- engine.py
+|   |   |-- hybrid_evaluator.py
+|   |   `-- server.py
+|   |
+|   |-- local_gpu_agent/                      # Local hybrid agent runtime
+|   |-- local_agent/                          # Local orchestrator / remote client
+|   |-- colab_runtime/                        # Runtime offload len Colab
+|   |   `-- scripts/
+|   |-- colab_qwen_worker/                    # Worker chay Qwen tren Colab
+|   |
+|   |-- celery_workers/                       # Background jobs
+|   |   `-- tasks/                            # bronze/silver/gold/retraining tasks
+|   |
+|   |-- data_pipeline/                        # ETL Bronze -> Silver -> Gold
+|   |   |-- bronze_to_silver/
+|   |   |-- silver_to_gold/
+|   |   `-- retraining/
+|   |
+|   `-- shared/                               # Config, DB, broker, contracts
+|       |-- config.py
+|       |-- database.py
+|       |-- data_contracts.py
+|       |-- logger.py
+|       |-- message_broker.py
+|       `-- s3_client.py
+|
+|-- data_lake/                                # Du lieu local mo phong data lake
+|   `-- bronze/
+|
+|-- System architecture/                      # Tai lieu kien truc noi bo
+|   |-- 00_system_overview.md
+|   |-- 01_mlops_pipeline.md
+|   |-- 02_admin_dashboard.md
+|   |-- 03_shared_infrastructure.md
+|   `-- 04_operations.md
+|
+|-- tests/                                    # Unit, integration, E2E
+|   |-- django_web/
+|   |-- fastapi_service/
+|   |-- celery_workers/
+|   `-- e2e/
+|
+|-- infrastructure/                           # Ha tang/deployment
+|-- monitoring/                               # Monitoring stack
+|-- static/                                   # Static assets root-level
+|-- design_mockups/                           # Tai nguyen mockup giao dien
+|-- docx_review/                              # Tai lieu/danh gia docx
+`-- Extract feature/                          # Thu muc nghien cuu/thu nghiem feature extraction
 ```
 
 ---
