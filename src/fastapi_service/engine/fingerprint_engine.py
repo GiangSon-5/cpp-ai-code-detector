@@ -36,6 +36,10 @@ BEHAVIORAL_INSIGHTS: dict[str, dict[str, str]] = {
         "human": "Độ dài dòng biến động lớn, lúc rất ngắn lúc rất dài do phong cách không nhất quán.",
         "ai": "AI duy trì độ dài dòng vừa phải và đồng đều theo quy chuẩn 80-100 ký tự.",
     },
+    "max_line_length": {
+        "human": "Người viết hay để các dòng code dài lê thê không ngắt dòng.",
+        "ai": "AI định dạng thụt lề chuẩn, ngắt dòng đều đặn để giữ code dễ đọc.",
+    },
     "tab_vs_space_ratio": {
         "human": "Code thường trộn lẫn lộn xộn giữa Tab và Space do copy-paste hoặc code nhóm.",
         "ai": "AI sinh code với định dạng thụt lề chuẩn mực (thường 100% Space).",
@@ -48,13 +52,17 @@ BEHAVIORAL_INSIGHTS: dict[str, dict[str, str]] = {
         "human": "Mức độ đồng nhất kém, lúc mở ngoặc cùng dòng, lúc xuống dòng.",
         "ai": "Tính nhất quán cực cao, luôn tuân thủ một phong cách duy nhất.",
     },
-    "single_char_var_ratio": {
-        "human": "Lạm dụng biến 1 ký tự (i, j, n) là thói quen kinh điển để code nhanh.",
-        "ai": "AI thích đặt tên biến đầy đủ ý nghĩa theo nguyên tắc Clean Code.",
-    },
     "avg_identifier_length": {
         "human": "Độ dài tên biến trung bình thấp do thói quen viết tắt.",
         "ai": "Tên biến dài và mô tả chính xác chức năng.",
+    },
+    "identifier_length_variance": {
+        "human": "Sự chênh lệch lớn giữa tên biến cực ngắn và biến rất dài trong cùng một file.",
+        "ai": "Tên định danh có độ dài đồng đều và nhất quán theo quy chuẩn clean code.",
+    },
+    "single_char_var_ratio": {
+        "human": "Lạm dụng biến 1 ký tự (i, j, n) là thói quen kinh điển để code nhanh.",
+        "ai": "AI thích đặt tên biến đầy đủ ý nghĩa theo nguyên tắc Clean Code.",
     },
     "unique_identifier_ratio": {
         "human": "Tái sử dụng cùng một tên biến nhiều lần trong các vòng lặp lồng nhau.",
@@ -68,6 +76,10 @@ BEHAVIORAL_INSIGHTS: dict[str, dict[str, str]] = {
         "human": "Thường dồn toàn bộ logic vào hàm main, for/if lồng nhau sâu hoắm.",
         "ai": "Chia nhỏ các hàm để giữ độ phức tạp thấp và dễ đọc hơn.",
     },
+    "num_functions": {
+        "human": "Số lượng hàm ít, thường viết code tuyến tính không chia module.",
+        "ai": "Phân chia mã nguồn thành nhiều hàm độc lập thực hiện chức năng riêng biệt.",
+    },
     "avg_function_loc": {
         "human": "Hàm dài, thường nhét toàn bộ xử lý vào 1 hàm duy nhất.",
         "ai": "Chia nhỏ hàm, mỗi hàm chỉ làm 1 việc (Single Responsibility).",
@@ -79,6 +91,14 @@ BEHAVIORAL_INSIGHTS: dict[str, dict[str, str]] = {
     "halstead_difficulty": {
         "human": "Độ khó cao bất thường do sử dụng toán tử lặp lại thiếu tối ưu.",
         "ai": "Mức độ duy trì cân đối, tối ưu hóa để dễ hiểu nhất.",
+    },
+    "halstead_effort": {
+        "human": "Công sức gõ code/suy nghĩ phân phối không đồng đều, thiếu tối ưu toán tử.",
+        "ai": "Công sức lập trình được tối ưu hóa thông qua các câu lệnh chuẩn mực.",
+    },
+    "halstead_bugs": {
+        "human": "Mã nguồn tự do dễ phát sinh lỗi tiềm ẩn do cấu trúc lỏng lẻo.",
+        "ai": "Khả năng phát sinh lỗi thấp nhờ cấu trúc và định kiểu chặt chẽ.",
     },
     "maintainability_index": {
         "human": "Chỉ số bảo trì thấp do code phức tạp, thiếu comment và cấu trúc.",
@@ -96,17 +116,89 @@ BEHAVIORAL_INSIGHTS: dict[str, dict[str, str]] = {
         "human": "Thường include hàng loạt thư viện thừa hoặc thiếu do thói quen.",
         "ai": "Include chính xác những thư viện cần thiết cho thuật toán.",
     },
+    "has_bits_stdc": {
+        "human": "Đặc sản của coder thi đấu giải thuật: dùng thư viện vạn năng bits/stdc++.",
+        "ai": "Rất ít khi dùng bits/stdc++ vì đi ngược lại tiêu chuẩn phát triển dự án thực tế.",
+    },
     "macro_count": {
         "human": "Đặc sản của sinh viên: lạm dụng macro (#define pb push_back).",
         "ai": "Rất ít lạm dụng macro vì đi ngược triết lý Modern C++.",
+    },
+    "modern_cpp_ratio": {
+        "human": "Lập trình viên thường viết code theo chuẩn C++ cũ, ít dùng các tính năng mới.",
+        "ai": "Sử dụng các cú pháp C++ hiện đại (auto, nullptr, constexpr, lambda) rất tự nhiên.",
+    },
+    "const_usage_ratio": {
+        "human": "Hiếm khi khai báo const hoặc constexpr cho biến hay tham số hàm.",
+        "ai": "Tích cực sử dụng const/constexpr để tối ưu hóa hiệu năng và bảo vệ dữ liệu.",
+    },
+    "has_fast_io": {
+        "human": "Thường thêm dòng tối ưu nhập xuất (ios_base::sync_with_stdio) khi code thi đấu.",
+        "ai": "Hầu như không sử dụng lệnh tối ưu nhập xuất này trong code ứng dụng thông thường.",
+    },
+    "newline_style_ratio": {
+        "human": "Sử dụng pha trộn giữa '\\n' và 'endl' không đồng nhất.",
+        "ai": "Lựa chọn và duy trì một phong cách xuống dòng cực kỳ nhất quán.",
     },
     "shannon_entropy": {
         "human": "Entropy thấp do copy-paste hoặc lặp lại cấu trúc cơ học.",
         "ai": "Entropy cao vì từ vựng phong phú, comment đa dạng.",
     },
+    "bigram_entropy": {
+        "human": "Entropy bigram thấp, biểu thị các cặp ký tự lặp lại thường xuyên theo thói quen cũ.",
+        "ai": "Entropy bigram cân bằng, biểu thị sự đa dạng trong cách ghép từ và lệnh.",
+    },
     "whitespace_entropy": {
         "human": "Sự ngẫu nhiên cao trong việc dùng Space/Tab ở các vị trí khác nhau.",
         "ai": "Tuân thủ nghiêm ngặt quy tắc khoảng trắng (entropy thấp).",
+    },
+    "class_count": {
+        "human": "Hiếm khi thiết kế class cho các bài code giải thuật ngắn hoặc viết kiểu thủ tục.",
+        "ai": "Cấu trúc hóa chương trình bằng class hướng đối tượng rất bài bản.",
+    },
+    "struct_count": {
+        "human": "Lạm dụng struct để gom nhóm nhanh thuộc tính mà không dùng phương thức.",
+        "ai": "Sử dụng struct đúng mục đích chứa dữ liệu thô, ưu tiên class cho hành vi.",
+    },
+    "has_inheritance": {
+        "human": "Hầu như không sử dụng kế thừa class trong các bài tập code đơn giản.",
+        "ai": "Chủ động thiết kế sơ đồ kế thừa lớp để tái sử dụng mã nguồn chuẩn OOP.",
+    },
+    "access_specifier_ratio": {
+        "human": "Để mặc định phạm vi truy cập (thường là public) hoặc viết lộn xộn.",
+        "ai": "Phân chia rõ ràng phạm vi truy cập (public, private, protected) để đóng gói dữ liệu.",
+    },
+    "virtual_override_ratio": {
+        "human": "Không bao giờ dùng cơ chế đa hình ảo (virtual/override) trong code cơ bản.",
+        "ai": "Sử dụng linh hoạt cơ chế virtual và override để xây dựng các phương thức đa hình.",
+    },
+    "using_std_ratio": {
+        "human": "Hơn 80% con người dùng `using namespace std;` ở đầu file để đỡ phải gõ nhiều.",
+        "ai": "Viết rõ tiền tố `std::` cho từng định danh để tránh ô nhiễm vùng tên (namespace pollution).",
+    },
+    "try_catch_ratio": {
+        "human": "Bỏ qua hoàn toàn việc bắt lỗi/ngoại lệ bằng khối lệnh try-catch.",
+        "ai": "Viết code phòng thủ tốt, chủ động đặt try-catch ở các vùng có nguy cơ phát sinh lỗi.",
+    },
+    "raw_pointer_ratio": {
+        "human": "Sử dụng con trỏ thô (raw pointer `*`) để cấp phát động và quản lý bộ nhớ trực tiếp.",
+        "ai": "Hạn chế tối đa con trỏ thô, ưu tiên dùng smart pointer hoặc tham chiếu an toàn.",
+    },
+    "getter_setter_ratio": {
+        "human": "Thường cho thuộc tính ở dạng public để truy cập trực tiếp thay vì viết getter/setter.",
+        "ai": "Tuân thủ nguyên lý OOP bằng cách đóng gói private thuộc tính và viết getter/setter đầy đủ.",
+    },
+    "std_prefix_ratio": {
+        "human": "Hạn chế gõ tiền tố `std::` do lười hoặc đã dùng namespace global.",
+        "ai": "Viết đầy đủ và nhất quán tiền tố `std::` cho tất cả các thư viện chuẩn C++.",
+    },
+    "cpp_cast_ratio": {
+        "human": "Sử dụng ép kiểu kiểu C cổ điển `(int)value` vì dễ viết.",
+        "ai": "Ưu tiên dùng các toán tử ép kiểu an toàn của C++ (`static_cast`, `const_cast`).",
+    },
+    "emoji_marker_score": {
+        "human": "Thêm các ký hiệu cảm xúc hoặc icon cá nhân vào comment biểu lộ cảm xúc.",
+        "ai": "Mã nguồn nghiêm túc, chuẩn dự án chuyên nghiệp, không bao giờ chứa emoji tự do.",
     },
 }
 
@@ -126,17 +218,25 @@ _CATEGORY_MAP: dict[str, str] = {
             "avg_cyclomatic_complexity", "num_functions", "avg_function_loc",
             "halstead_volume", "halstead_difficulty", "halstead_effort",
             "halstead_bugs", "maintainability_index",
-            "code_to_comment_ratio", "max_nesting_depth",
+            "max_nesting_depth",
         ],
         "Coding Habits": [
             "total_includes", "has_bits_stdc", "macro_count",
             "modern_cpp_ratio", "const_usage_ratio", "has_fast_io",
-            "newline_style_ratio",
+            "newline_style_ratio", "using_std_ratio", "try_catch_ratio",
+            "raw_pointer_ratio", "std_prefix_ratio", "cpp_cast_ratio",
         ],
         "Information Theory": [
             "shannon_entropy", "bigram_entropy", "whitespace_entropy",
         ],
-        "Comment & Style": ["comment_ratio", "code_to_comment_ratio"],
+        "Comment & Style": [
+            "comment_ratio", "code_to_comment_ratio", "emoji_marker_score",
+        ],
+        "OOP Structure": [
+            "class_count", "struct_count", "has_inheritance",
+            "access_specifier_ratio", "virtual_override_ratio",
+            "getter_setter_ratio",
+        ],
     }.items()
     for f in feats
 }
@@ -148,6 +248,7 @@ _CATEGORY_VN: dict[str, str] = {
     "Coding Habits":        "các thói quen mã hóa (Habits)",
     "Information Theory":   "độ nhiễu loạn thông tin (Entropy)",
     "Comment & Style":      "phong cách bình luận (Comment)",
+    "OOP Structure":        "thiết kế hướng đối tượng (OOP)",
 }
 
 

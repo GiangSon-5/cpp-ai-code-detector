@@ -54,15 +54,18 @@ class BronzeRecord(BaseModel):
 
 
 # =====================================================================
-# SILVER-ML — 32 Features for LightGBM
+# SILVER-ML — 44 Features for LightGBM
 # =====================================================================
 class SilverMLRecord(BaseModel):
-    """32 static features extracted by CppFeatureExtractorV8."""
+    """44 static features extracted by CppFeatureExtractorV8."""
     code_hash: str
+    comment_ratio: float = 0.0
     empty_line_ratio: float = 0.0
+    emoji_marker_score: float = 0.0
     avg_line_length: float = 0.0
     max_line_length: float = 0.0
     tab_vs_space_ratio: float = 0.0
+    trailing_space_ratio: float = 0.0
     brace_style_consistency: float = 0.0
     avg_identifier_length: float = 0.0
     identifier_length_variance: float = 0.0
@@ -89,32 +92,41 @@ class SilverMLRecord(BaseModel):
     shannon_entropy: float = 0.0
     bigram_entropy: float = 0.0
     whitespace_entropy: float = 0.0
-    comment_ratio: float = 0.0
-    trailing_space_ratio: float = 0.0
+    class_count: float = 0.0
+    struct_count: float = 0.0
+    has_inheritance: float = 0.0
+    access_specifier_ratio: float = 0.0
+    virtual_override_ratio: float = 0.0
+    using_std_ratio: float = 0.0
+    try_catch_ratio: float = 0.0
+    raw_pointer_ratio: float = 0.0
+    getter_setter_ratio: float = 0.0
+    std_prefix_ratio: float = 0.0
+    cpp_cast_ratio: float = 0.0
     label: Optional[int] = Field(None, description="0=Human, 1=AI (for training data)")
 
     # Ordered feature names used by LightGBM
     FEATURE_NAMES: list[str] = Field(
         default=[
-            "empty_line_ratio", "avg_line_length", "max_line_length",
-            "tab_vs_space_ratio", "brace_style_consistency",
+            "comment_ratio", "empty_line_ratio", "emoji_marker_score", "avg_line_length", "max_line_length",
+            "tab_vs_space_ratio", "trailing_space_ratio", "brace_style_consistency",
             "avg_identifier_length", "identifier_length_variance",
-            "single_char_var_ratio", "unique_identifier_ratio",
-            "keyword_to_identifier_ratio", "avg_cyclomatic_complexity",
-            "num_functions", "avg_function_loc",
-            "halstead_volume", "halstead_difficulty", "halstead_effort",
-            "halstead_bugs", "maintainability_index",
-            "code_to_comment_ratio", "max_nesting_depth",
+            "single_char_var_ratio", "unique_identifier_ratio", "keyword_to_identifier_ratio",
+            "avg_cyclomatic_complexity", "num_functions", "avg_function_loc",
+            "halstead_volume", "halstead_difficulty", "halstead_effort", "halstead_bugs",
+            "maintainability_index", "code_to_comment_ratio", "max_nesting_depth",
             "total_includes", "has_bits_stdc", "macro_count",
-            "modern_cpp_ratio", "const_usage_ratio", "has_fast_io",
-            "newline_style_ratio", "shannon_entropy", "bigram_entropy",
-            "whitespace_entropy", "comment_ratio", "trailing_space_ratio",
+            "modern_cpp_ratio", "const_usage_ratio", "has_fast_io", "newline_style_ratio",
+            "shannon_entropy", "bigram_entropy", "whitespace_entropy",
+            "class_count", "struct_count", "has_inheritance",
+            "access_specifier_ratio", "virtual_override_ratio", "using_std_ratio", "try_catch_ratio",
+            "raw_pointer_ratio", "getter_setter_ratio", "std_prefix_ratio", "cpp_cast_ratio"
         ],
         exclude=True,  # excluded from serialisation
     )
 
     def to_feature_vector(self) -> list[float]:
-        """Return a flat list of 32 floats in the canonical order."""
+        """Return a flat list of 44 floats in the canonical order."""
         d = self.model_dump()
         return [float(d[f]) for f in self.FEATURE_NAMES]
 
