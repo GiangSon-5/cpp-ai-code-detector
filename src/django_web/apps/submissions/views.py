@@ -248,6 +248,7 @@ def result_view(request, code_hash):
         result["dl_score_pct"]     = round(dl  * 100, 1)
         result["ml_score_pct"]     = round(ml  * 100, 1)
         result["hybrid_score_pct"] = round(hyb * 100, 1)
+        result["ml_dl_gap_pct"]     = round(result.get("ml_dl_gap", 0.0) * 100, 1)
 
         for chunk in result.get("chunks", []):
             chunk["score_pct"] = chunk.get("score", 0) * 100
