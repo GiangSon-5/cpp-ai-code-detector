@@ -366,21 +366,7 @@
       </div>
     </div>
 
-    <!-- Metrics mini-row -->
-    <div class="grid grid-cols-3 gap-3">
-      <div class="card" style="padding:16px 18px;border-radius:16px;">
-        <p class="text-xs font-black uppercase tracking-widest" style="color:#64748b;">PPL</p>
-        <p class="text-xl font-black text-white mt-1">{{ result.perplexity|floatformat:2 }}</p>
-      </div>
-      <div class="card" style="padding:16px 18px;border-radius:16px;">
-        <p class="text-xs font-black uppercase tracking-widest" style="color:#64748b;">Max PPL</p>
-        <p class="text-xl font-black text-white mt-1">{{ result.max_ppl|floatformat:2 }}</p>
-      </div>
-      <div class="card" style="padding:16px 18px;border-radius:16px;">
-        <p class="text-xs font-black uppercase tracking-widest" style="color:#64748b;">Burst</p>
-        <p class="text-xl font-black text-white mt-1">{{ result.burstiness|floatformat:2 }}</p>
-      </div>
-    </div>
+
 
     <!-- Chunk cards -->
     <div class="space-y-3">
@@ -395,9 +381,7 @@
             {{ chunk.score_pct|floatformat:1 }}% AI
           </span>
         </div>
-        {% if chunk.critique %}
-        <p class="text-xs leading-relaxed line-clamp-2" style="color:#94a3b8;">{{ chunk.critique|truncatechars:120 }}</p>
-        {% endif %}
+
         <button class="mt-3 w-full py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all"
                 style="background:rgba(255,255,255,0.03);color:#64748b;border:1px solid rgba(255,255,255,0.06);">
           View Detailed Report
@@ -504,7 +488,7 @@
       <!-- Modal header -->
       <div class="flex justify-between items-end">
         <div>
-          <span class="text-xs font-black uppercase tracking-widest" style="color:#22d3ee;">In-Depth Analysis</span>
+          <span class="text-xs font-black uppercase tracking-widest" style="color:#22d3ee;">Chunk Details</span>
           <h2 class="text-3xl font-black text-white mt-1">Chunk #{{ chunk.index }}</h2>
           <p class="text-sm mt-1" style="color:#64748b;">Tokens: {{ chunk.snippet|length }}</p>
         </div>
@@ -543,13 +527,7 @@
             <div>{% for tok in chunk.top_hu %}<span class="token-badge token-human">{{ tok }}</span>{% endfor %}</div>
           </div>
           {% endif %}
-          <!-- Critique -->
-          {% if chunk.critique %}
-          <div class="card" style="border-radius:16px;padding:18px;flex:1;">
-            <p class="text-xs font-black uppercase tracking-widest mb-3" style="color:#64748b;">Model Explanation</p>
-            <p class="text-sm leading-relaxed" style="color:#cbd5e1;">{{ chunk.critique }}</p>
-          </div>
-          {% endif %}
+
         </div>
       </div>
     </div>
