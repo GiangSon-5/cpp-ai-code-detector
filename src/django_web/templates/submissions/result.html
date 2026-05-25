@@ -89,35 +89,156 @@
         <div class="card mb-6 animate-slide-up" style="border-radius:20px; padding:24px; border: 1px dashed rgba(248,113,113,0.3); background:rgba(248,113,113,0.03);">
           <div class="flex items-center gap-2 mb-3">
             <span style="font-size: 1.1rem;">⚠️</span>
-            <h4 class="text-xs font-black uppercase tracking-widest text-red-400">Phát hiện mâu thuẫn phân tích (Contrastive XAI)</h4>
+            <h4 class="text-xs font-black uppercase tracking-widest text-red-400">Phát hiện mâu thuẫn phân tích (Contrastive XAI — Lệch {{ result.ml_dl_gap_pct }}%)</h4>
           </div>
+          
           <div class="grid grid-cols-2 gap-6 border-b pb-4 mb-4" style="border-color:rgba(255,255,255,0.06);">
+            <!-- ML Panel -->
             <div style="border-right:1px solid rgba(255,255,255,0.05); padding-right:16px;">
-              <p class="text-xs font-bold text-yellow-400 mb-2 flex items-center gap-1.5">
-                <span>📊</span> Phong cách bề ngoài (ML)
+              <p class="text-xs font-bold text-yellow-400 mb-3 flex items-center gap-1.5">
+                <span>📊</span> Phong cách bề ngoài (ML · LightGBM + SHAP)
               </p>
-              <ul class="text-xs space-y-1 text-slate-400">
-                <li>• Tên biến tự định nghĩa ngắn hoặc viết tắt ↑</li>
-                <li>• Căn lề dòng trống tùy tiện, không nhất quán ↑</li>
-                <li>• Định dạng code có nhiều khoảng trắng thừa ↑</li>
-                <li class="pt-2 font-bold text-green-400">→ Dự đoán hình thái: Giống người viết</li>
-              </ul>
+              
+              <div class="space-y-3">
+                {% if result.fingerprint.top_features %}
+                  {% for feat in result.fingerprint.top_features %}
+                  <div class="flex flex-col gap-1">
+                    <div class="flex justify-between items-center text-[11px]">
+                      <span class="text-slate-300 font-medium">{{ feat.display_name }}</span>
+                      <span class="font-mono text-slate-500 text-[9px] bg-white/5 px-1 py-0.2 rounded">val: {{ feat.value|floatformat:3 }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <!-- Progress bar -->
+                      <div class="flex-1 bg-white/5 h-2 rounded overflow-hidden relative">
+                        <div class="h-full rounded transition-all duration-500" 
+                             style="width: {{ feat.bar_width }}%; background: {% if feat.is_positive %}#f87171{% else %}#4ade80{% endif %};">
+                        </div>
+                      </div>
+                      <!-- Numeric SHAP impact -->
+                      <span class="text-[10px] font-mono font-bold w-10 text-right {% if feat.is_positive %}text-red-400{% else %}text-green-400{% endif %}">
+                        {% if feat.is_positive %}+{% endif %}{{ feat.shap_value|floatformat:2 }}
+                      </span>
+                      <!-- Arrow indicator -->
+                      <span class="text-[10px] {% if feat.is_positive %}text-red-400{% else %}text-green-400{% endif %}">
+                        {% if feat.is_positive %}↑{% else %}↓{% endif %}
+                      </span>
+                    </div>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <p class="text-xs text-slate-500 italic">Không có đặc trưng hình thái.</p>
+                {% endif %}
+              </div>
+
+              <div class="mt-4 pt-2 border-t border-white/5">
+                <p class="text-xs font-bold {% if result.ml_score_pct >= 50 %}text-red-400{% else %}text-green-400{% endif %}">
+                  → ML kết luận: {{ result.ml_score_pct }}% AI ({{ result.ml_human_pct }}% Human)
+                </p>
+                <p class="text-[10px] text-slate-400 mt-1">
+                  Nhận định: định dạng bề ngoài rất giống phong cách {% if result.ml_score_pct >= 50 %}máy học (AI){% else %}con người (Human){% endif %}.
+                </p>
+              </div>
             </div>
+
+            <!-- DL Panel -->
             <div>
-              <p class="text-xs font-bold text-indigo-400 mb-2 flex items-center gap-1.5">
-                <span>🧠</span> Cấu trúc logic sâu (DL)
+              <p class="text-xs font-bold text-indigo-400 mb-3 flex items-center gap-1.5">
+                <span>🧠</span> Cấu trúc logic sâu (DL · RoBERTa Ensemble)
               </p>
-              <ul class="text-xs space-y-1 text-slate-400">
-                <li>• Luồng dữ liệu và phân chia khối lệnh đồng đều ↑</li>
-                <li>• Cấu trúc logic phức tạp và sử dụng Modern C++ ↑</li>
-                <li>• Phân bố cấu trúc hàm rập khuôn chuẩn mực ↑</li>
-                <li class="pt-2 font-bold text-red-400">→ Đặc trưng logic: AI sinh</li>
-              </ul>
+              <p class="text-[10px] text-slate-400 mb-3 leading-relaxed">
+                Mô hình được huấn luyện học nhận diện các đặc trưng ngữ nghĩa ẩn không thể đặc tả thủ công.
+              </p>
+              
+              <!-- Confidence info -->
+              <div class="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 mb-3 space-y-1.5">
+                <div class="flex justify-between items-center text-[10px]">
+                  <span class="text-slate-400">Độ tự tin của model:</span>
+                  <span class="font-bold text-white">{{ result.dl_score_pct }}% AI</span>
+                </div>
+                <!-- Mini Progress track -->
+                <div class="progress-track" style="height:3px; border-radius:1.5px; background:rgba(255,255,255,0.05); overflow:hidden;">
+                  <div class="progress-fill" style="height:100%; border-radius:1.5px; width:{{ result.dl_score_pct }}%; background:#818cf8;"></div>
+                </div>
+                
+                <div class="flex justify-between items-center text-[10px]">
+                  <span class="text-slate-400">Khoảng cách khỏi ngưỡng:</span>
+                  <span class="font-bold {% if result.dl_threshold_gap >= 0 %}text-red-400{% else %}text-green-400{% endif %}">
+                    {% if result.dl_threshold_gap >= 0 %}+{% endif %}{{ result.dl_threshold_gap }}% 
+                    <span class="text-[9px] font-normal text-slate-500">
+                      ({% if result.dl_threshold_gap_abs >= 20 %}rất rõ ràng{% elif result.dl_threshold_gap_abs >= 5 %}khá rõ ràng{% else %}nhập nhằng{% endif %})
+                    </span>
+                  </span>
+                </div>
+                
+                <div class="flex justify-between items-center text-[10px]">
+                  <span class="text-slate-400">Loại cấu trúc (Router):</span>
+                  <span class="font-bold text-cyan-400">{% if result.is_oop %}OOP (Hướng đối tượng){% else %}NORMAL (Giải thuật){% endif %}</span>
+                </div>
+              </div>
+              
+              <p class="text-[10px] text-slate-300 italic mb-3 p-2 rounded-lg bg-indigo-500/5 border-l-2 border-indigo-500/30">
+                "Embedding của đoạn code này nằm rất gần vùng phân phối của {% if result.dl_score_pct >= 50 %}AI-generated{% else %}Human-written{% endif %} code trong không gian đặc trưng ngữ nghĩa."
+              </p>
+              
+              <div class="text-[10px] text-slate-400 space-y-2 border-t border-white/5 pt-2">
+                <p class="font-bold text-slate-300 text-[11px] mb-1">⚠️ Đặc trưng cấu trúc hỗ trợ (Proxy features):</p>
+                {% if result.is_oop %}
+                  <div class="flex gap-1.5 items-start">
+                    <span class="text-indigo-400">🔷</span>
+                    <div>
+                      <strong class="text-slate-300">Tính kế thừa & đa hình mẫu mực:</strong> 
+                      <span class="text-slate-400 text-[9px] block">Cấu trúc phân cấp lớp cực kỳ tinh vi, thiếu tính ngẫu hứng</span>
+                    </div>
+                  </div>
+                  <div class="flex gap-1.5 items-start">
+                    <span class="text-indigo-400">🔷</span>
+                    <div>
+                      <strong class="text-slate-300">Phân bố Access Specifiers đồng đều:</strong> 
+                      <span class="text-slate-400 text-[9px] block">Phân chia phạm vi truy cập (public/private) tối ưu hóa quá mức</span>
+                    </div>
+                  </div>
+                  <div class="flex gap-1.5 items-start">
+                    <span class="text-indigo-400">🔷</span>
+                    <div>
+                      <strong class="text-slate-300">Tần suất Getter/Setter chuẩn hóa:</strong> 
+                      <span class="text-slate-400 text-[9px] block">Cấu trúc hàm phụ trợ đồng bộ tự động không thừa thiếu</span>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="flex gap-1.5 items-start">
+                    <span class="text-indigo-400">🔷</span>
+                    <div>
+                      <strong class="text-slate-300">Complexity thấp bất thường:</strong> 
+                      <span class="text-slate-400 text-[9px] block">Logic rẽ nhánh (if/else) rất ít, tối ưu hóa quá mức</span>
+                    </div>
+                  </div>
+                  <div class="flex gap-1.5 items-start">
+                    <span class="text-indigo-400">🔷</span>
+                    <div>
+                      <strong class="text-slate-300">Token distribution đồng đều:</strong> 
+                      <span class="text-slate-400 text-[9px] block">Phân phối từ khóa (keywords/identifiers) khớp với chuẩn AI</span>
+                    </div>
+                  </div>
+                  <div class="flex gap-1.5 items-start">
+                    <span class="text-indigo-400">🔷</span>
+                    <div>
+                      <strong class="text-slate-300">Repetition pattern trong cấu trúc hàm:</strong> 
+                      <span class="text-slate-400 text-[9px] block">Cấu trúc lặp rập khuôn mẫu mực, thiếu các nét ngẫu hứng</span>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
             </div>
           </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            <strong class="text-white">🔎 Kết luận đối chiếu:</strong> Mã nguồn AI được viết với phong cách ngụy trang (AI-generated with human-like formatting). Hệ thống ưu tiên kết luận của mô hình Học sâu (DL Decision) do mô hình Học máy (ML) dễ bị đánh lừa bởi phong cách định dạng bề ngoài.
-          </p>
+          
+          <div class="text-xs text-slate-300 leading-relaxed space-y-2 pt-2">
+            <p>
+              <strong class="text-white">🔎 Kết luận đối chiếu:</strong> Mã nguồn AI được viết với phong cách ngụy trang (AI-generated with human-like formatting). Giao diện ưu tiên kết luận của mô hình Học sâu (DL Decision) do mô hình Học máy (ML) dễ bị đánh lừa bởi phong cách định dạng bề ngoài.
+            </p>
+            <p class="text-slate-400 text-[10px] italic bg-white/[0.01] p-2.5 rounded-xl border border-white/5">
+              💡 <strong>Lưu ý về Asymmetric Explainability:</strong> Đây là cơ chế giải thích bất đối xứng của hệ thống Hybrid. ML (LightGBM) sử dụng mô hình hộp trắng có thể giải thích chi tiết qua SHAP cho phong cách bề ngoài. Ngược lại, DL (RoBERTa) là mô hình hộp đen ngữ nghĩa sâu được diễn giải qua khoảng cách không gian embedding kết hợp với các đặc trưng cấu trúc đại diện (Proxy features).
+            </p>
+          </div>
         </div>
         {% endif %}
 

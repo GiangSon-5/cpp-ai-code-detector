@@ -250,6 +250,39 @@ def result_view(request, code_hash):
         result["hybrid_score_pct"] = round(hyb * 100, 1)
         result["ml_dl_gap_pct"]     = round(result.get("ml_dl_gap", 0.0) * 100, 1)
 
+        # Calculate max absolute SHAP value for rendering scale
+        fingerprint = result.get("fingerprint", {})
+        if fingerprint:
+            top_features = fingerprint.get("top_features", [])
+            max_shap = max(abs(feat.get("shap_value", 0.0)) for feat in top_features) if top_features else 1.0
+            if max_shap == 0.0:
+                max_shap = 1.0
+            result["max_shap"] = max_shap
+            
+            for feat in top_features:
+                sval = feat.get("shap_value", 0.0)
+                feat["bar_width"] = round((abs(sval) / max_shap) * 100, 1)
+                feat["is_positive"] = sval > 0
+
+        # Precompute ML/DL info for template context
+        ml_score_pct = result.get("ml_score_pct", 0.0)
+        result["ml_human_pct"] = round(100.0 - ml_score_pct, 1)
+        result["ml_pred_label"] = "AI GENERATED" if ml_score_pct >= 50.0 else "HUMAN WRITTEN"
+        
+        dl_score_pct = result.get("dl_score_pct", 0.0)
+        result["dl_human_pct"] = round(100.0 - dl_score_pct, 1)
+        result["dl_pred_label"] = "AI GENERATED" if dl_score_pct >= 50.0 else "HUMAN WRITTEN"
+        
+        # Calculate distance from threshold for DL
+        dl_threshold_gap = dl_score_pct - 50.0
+        result["dl_threshold_gap"] = round(dl_threshold_gap, 1)
+        result["dl_threshold_gap_abs"] = round(abs(dl_threshold_gap), 1)
+        
+        # Check router type (OOP vs Normal)
+        model_used = result.get("model_used", "")
+        classification = result.get("classification", "")
+        result["is_oop"] = "OOP" in model_used or "OOP" in classification
+
         for chunk in result.get("chunks", []):
             chunk["score_pct"] = chunk.get("score", 0) * 100
 

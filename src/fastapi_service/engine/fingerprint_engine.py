@@ -24,229 +24,613 @@ logger = AppLogger()
 # Human-readable behavioral insights per feature (Vietnamese)
 # ---------------------------------------------------------------------------
 BEHAVIORAL_INSIGHTS: dict[str, dict[str, str]] = {
+
+    # ── Comment & Style ──────────────────────────────────────────────────
     "comment_ratio": {
-        "human": "Sinh viên thường lười comment hoặc comment ngắn gọn. Đôi khi có comment rác.",
-        "ai": "AI sinh ra comment chi tiết, chuẩn mực ngữ pháp và giải thích rõ ràng.",
-    },
-    "empty_line_ratio": {
-        "human": "Con người xuống dòng tùy tiện, để trống nhiều dòng liên tiếp do thói quen.",
-        "ai": "AI phân chia hàm và khối lệnh bằng đúng 1 dòng trống cực kỳ nhất quán.",
-    },
-    "avg_line_length": {
-        "human": "Độ dài dòng biến động lớn, lúc rất ngắn lúc rất dài do phong cách không nhất quán.",
-        "ai": "AI duy trì độ dài dòng vừa phải và đồng đều theo quy chuẩn 80-100 ký tự.",
-    },
-    "max_line_length": {
-        "human": "Người viết hay để các dòng code dài lê thê không ngắt dòng.",
-        "ai": "AI định dạng thụt lề chuẩn, ngắt dòng đều đặn để giữ code dễ đọc.",
-    },
-    "tab_vs_space_ratio": {
-        "human": "Code thường trộn lẫn lộn xộn giữa Tab và Space do copy-paste hoặc code nhóm.",
-        "ai": "AI sinh code với định dạng thụt lề chuẩn mực (thường 100% Space).",
-    },
-    "trailing_space_ratio": {
-        "human": "Người lập trình hay gõ thừa dấu cách ở cuối dòng mà không xóa đi.",
-        "ai": "AI tối ưu văn bản sinh ra, rất hiếm khi để thừa khoảng trắng vô nghĩa.",
-    },
-    "brace_style_consistency": {
-        "human": "Mức độ đồng nhất kém, lúc mở ngoặc cùng dòng, lúc xuống dòng.",
-        "ai": "Tính nhất quán cực cao, luôn tuân thủ một phong cách duy nhất.",
-    },
-    "avg_identifier_length": {
-        "human": "Độ dài tên biến trung bình thấp do thói quen viết tắt.",
-        "ai": "Tên biến dài và mô tả chính xác chức năng.",
-    },
-    "identifier_length_variance": {
-        "human": "Sự chênh lệch lớn giữa tên biến cực ngắn và biến rất dài trong cùng một file.",
-        "ai": "Tên định danh có độ dài đồng đều và nhất quán theo quy chuẩn clean code.",
-    },
-    "single_char_var_ratio": {
-        "human": "Lạm dụng biến 1 ký tự (i, j, n) là thói quen kinh điển để code nhanh.",
-        "ai": "AI thích đặt tên biến đầy đủ ý nghĩa theo nguyên tắc Clean Code.",
-    },
-    "unique_identifier_ratio": {
-        "human": "Tái sử dụng cùng một tên biến nhiều lần trong các vòng lặp lồng nhau.",
-        "ai": "Đặt tên riêng biệt, có ngữ nghĩa rõ ràng cho từng định danh.",
-    },
-    "keyword_to_identifier_ratio": {
-        "human": "Tỉ lệ cao do dùng ít biến tự định nghĩa mà lạm dụng cấu trúc cơ bản.",
-        "ai": "Tạo ra nhiều cấu trúc, hàm phụ trợ làm tăng số định danh độc lập.",
-    },
-    "avg_cyclomatic_complexity": {
-        "human": "Thường dồn toàn bộ logic vào hàm main, for/if lồng nhau sâu hoắm.",
-        "ai": "Chia nhỏ các hàm để giữ độ phức tạp thấp và dễ đọc hơn.",
-    },
-    "num_functions": {
-        "human": "Số lượng hàm ít, thường viết code tuyến tính không chia module.",
-        "ai": "Phân chia mã nguồn thành nhiều hàm độc lập thực hiện chức năng riêng biệt.",
-    },
-    "avg_function_loc": {
-        "human": "Hàm dài, thường nhét toàn bộ xử lý vào 1 hàm duy nhất.",
-        "ai": "Chia nhỏ hàm, mỗi hàm chỉ làm 1 việc (Single Responsibility).",
-    },
-    "halstead_volume": {
-        "human": "Volume thấp do logic đơn giản, ít toán tử và toán hạng.",
-        "ai": "Volume cao hơn, code phức tạp hơn với nhiều phép tính và biểu thức.",
-    },
-    "halstead_difficulty": {
-        "human": "Độ khó cao bất thường do sử dụng toán tử lặp lại thiếu tối ưu.",
-        "ai": "Mức độ duy trì cân đối, tối ưu hóa để dễ hiểu nhất.",
-    },
-    "halstead_effort": {
-        "human": "Công sức gõ code/suy nghĩ phân phối không đồng đều, thiếu tối ưu toán tử.",
-        "ai": "Công sức lập trình được tối ưu hóa thông qua các câu lệnh chuẩn mực.",
-    },
-    "halstead_bugs": {
-        "human": "Mã nguồn tự do dễ phát sinh lỗi tiềm ẩn do cấu trúc lỏng lẻo.",
-        "ai": "Khả năng phát sinh lỗi thấp nhờ cấu trúc và định kiểu chặt chẽ.",
-    },
-    "maintainability_index": {
-        "human": "Chỉ số bảo trì thấp do code phức tạp, thiếu comment và cấu trúc.",
-        "ai": "Chỉ số bảo trì cao, code sạch sẽ và có thể bảo trì tốt.",
+        "human": (
+            "Mã nguồn do người viết thường có rất ít chú thích, hoặc chỉ comment "
+            "vài từ mang tính đánh dấu tạm thời như '// TODO' hay '// fix later'. "
+            "Mật độ thấp này phản ánh thói quen ưu tiên chạy được code trước, "
+            "giải thích sau."
+        ),
+        "ai": (
+            "AI có xu hướng tạo ra chú thích chi tiết, rõ ràng cho hầu hết các "
+            "khối logic — bao gồm cả những đoạn code đơn giản không thực sự cần "
+            "giải thích. Mật độ comment đồng đều bất thường này là dấu hiệu đặc trưng."
+        ),
     },
     "code_to_comment_ratio": {
-        "human": "Rất nhiều code nhưng rất ít comment, tỷ lệ code/comment cao.",
-        "ai": "Cân đối giữa code và comment, giải thích logic phức tạp rõ ràng.",
-    },
-    "max_nesting_depth": {
-        "human": "Độ lồng nhau sâu (4-5 cấp) do thói quen viết nested if/for.",
-        "ai": "Độ lồng nhau nông, dùng early return hoặc tách hàm để giảm độ sâu.",
-    },
-    "total_includes": {
-        "human": "Thường include hàng loạt thư viện thừa hoặc thiếu do thói quen.",
-        "ai": "Include chính xác những thư viện cần thiết cho thuật toán.",
-    },
-    "has_bits_stdc": {
-        "human": "Đặc sản của coder thi đấu giải thuật: dùng thư viện vạn năng bits/stdc++.",
-        "ai": "Rất ít khi dùng bits/stdc++ vì đi ngược lại tiêu chuẩn phát triển dự án thực tế.",
-    },
-    "macro_count": {
-        "human": "Đặc sản của sinh viên: lạm dụng macro (#define pb push_back).",
-        "ai": "Rất ít lạm dụng macro vì đi ngược triết lý Modern C++.",
-    },
-    "modern_cpp_ratio": {
-        "human": "Lập trình viên thường viết code theo chuẩn C++ cũ, ít dùng các tính năng mới.",
-        "ai": "Sử dụng các cú pháp C++ hiện đại (auto, nullptr, constexpr, lambda) rất tự nhiên.",
-    },
-    "const_usage_ratio": {
-        "human": "Hiếm khi khai báo const hoặc constexpr cho biến hay tham số hàm.",
-        "ai": "Tích cực sử dụng const/constexpr để tối ưu hóa hiệu năng và bảo vệ dữ liệu.",
-    },
-    "has_fast_io": {
-        "human": "Thường thêm dòng tối ưu nhập xuất (ios_base::sync_with_stdio) khi code thi đấu.",
-        "ai": "Hầu như không sử dụng lệnh tối ưu nhập xuất này trong code ứng dụng thông thường.",
-    },
-    "newline_style_ratio": {
-        "human": "Sử dụng pha trộn giữa '\\n' và 'endl' không đồng nhất.",
-        "ai": "Lựa chọn và duy trì một phong cách xuống dòng cực kỳ nhất quán.",
-    },
-    "shannon_entropy": {
-        "human": "Entropy thấp do copy-paste hoặc lặp lại cấu trúc cơ học.",
-        "ai": "Entropy cao vì từ vựng phong phú, comment đa dạng.",
-    },
-    "bigram_entropy": {
-        "human": "Entropy bigram thấp, biểu thị các cặp ký tự lặp lại thường xuyên theo thói quen cũ.",
-        "ai": "Entropy bigram cân bằng, biểu thị sự đa dạng trong cách ghép từ và lệnh.",
-    },
-    "whitespace_entropy": {
-        "human": "Sự ngẫu nhiên cao trong việc dùng Space/Tab ở các vị trí khác nhau.",
-        "ai": "Tuân thủ nghiêm ngặt quy tắc khoảng trắng (entropy thấp).",
-    },
-    "class_count": {
-        "human": "Hiếm khi thiết kế class cho các bài code giải thuật ngắn hoặc viết kiểu thủ tục.",
-        "ai": "Cấu trúc hóa chương trình bằng class hướng đối tượng rất bài bản.",
-    },
-    "struct_count": {
-        "human": "Lạm dụng struct để gom nhóm nhanh thuộc tính mà không dùng phương thức.",
-        "ai": "Sử dụng struct đúng mục đích chứa dữ liệu thô, ưu tiên class cho hành vi.",
-    },
-    "has_inheritance": {
-        "human": "Hầu như không sử dụng kế thừa class trong các bài tập code đơn giản.",
-        "ai": "Chủ động thiết kế sơ đồ kế thừa lớp để tái sử dụng mã nguồn chuẩn OOP.",
-    },
-    "access_specifier_ratio": {
-        "human": "Để mặc định phạm vi truy cập (thường là public) hoặc viết lộn xộn.",
-        "ai": "Phân chia rõ ràng phạm vi truy cập (public, private, protected) để đóng gói dữ liệu.",
-    },
-    "virtual_override_ratio": {
-        "human": "Không bao giờ dùng cơ chế đa hình ảo (virtual/override) trong code cơ bản.",
-        "ai": "Sử dụng linh hoạt cơ chế virtual và override để xây dựng các phương thức đa hình.",
-    },
-    "using_std_ratio": {
-        "human": "Hơn 80% con người dùng `using namespace std;` ở đầu file để đỡ phải gõ nhiều.",
-        "ai": "Viết rõ tiền tố `std::` cho từng định danh để tránh ô nhiễm vùng tên (namespace pollution).",
-    },
-    "try_catch_ratio": {
-        "human": "Bỏ qua hoàn toàn việc bắt lỗi/ngoại lệ bằng khối lệnh try-catch.",
-        "ai": "Viết code phòng thủ tốt, chủ động đặt try-catch ở các vùng có nguy cơ phát sinh lỗi.",
-    },
-    "raw_pointer_ratio": {
-        "human": "Sử dụng con trỏ thô (raw pointer `*`) để cấp phát động và quản lý bộ nhớ trực tiếp.",
-        "ai": "Hạn chế tối đa con trỏ thô, ưu tiên dùng smart pointer hoặc tham chiếu an toàn.",
-    },
-    "getter_setter_ratio": {
-        "human": "Thường cho thuộc tính ở dạng public để truy cập trực tiếp thay vì viết getter/setter.",
-        "ai": "Tuân thủ nguyên lý OOP bằng cách đóng gói private thuộc tính và viết getter/setter đầy đủ.",
-    },
-    "std_prefix_ratio": {
-        "human": "Hạn chế gõ tiền tố `std::` do lười hoặc đã dùng namespace global.",
-        "ai": "Viết đầy đủ và nhất quán tiền tố `std::` cho tất cả các thư viện chuẩn C++.",
-    },
-    "cpp_cast_ratio": {
-        "human": "Sử dụng ép kiểu kiểu C cổ điển `(int)value` vì dễ viết.",
-        "ai": "Ưu tiên dùng các toán tử ép kiểu an toàn của C++ (`static_cast`, `const_cast`).",
+        "human": (
+            "Người lập trình thường để tỷ lệ code/comment rất cao — nhiều dòng "
+            "xử lý nhưng gần như không có giải thích đi kèm, đặc biệt trong "
+            "các bài tập thuật toán ngắn."
+        ),
+        "ai": (
+            "AI duy trì tỷ lệ code/comment cân đối hơn: sau mỗi hàm hoặc khối "
+            "logic phức tạp đều có phần mô tả chức năng, khiến tỷ lệ này thấp "
+            "hơn đáng kể so với code thuần thủ công."
+        ),
     },
     "emoji_marker_score": {
-        "human": "Thêm các ký hiệu cảm xúc hoặc icon cá nhân vào comment biểu lộ cảm xúc.",
-        "ai": "Mã nguồn nghiêm túc, chuẩn dự án chuyên nghiệp, không bao giờ chứa emoji tự do.",
+        "human": (
+            "Một số lập trình viên — đặc biệt khi làm việc cá nhân — chèn ký "
+            "tự cảm xúc hoặc ký hiệu đặc biệt vào comment để đánh dấu ('// ✅ done', "
+            "'// ⚠️ cẩn thận'). Đây là dấu ấn cá nhân hiếm gặp trong code chuyên nghiệp."
+        ),
+        "ai": (
+            "AI luôn tạo ra mã nguồn theo chuẩn dự án chuyên nghiệp — comment "
+            "thuần văn bản, không chứa emoji hay ký hiệu cảm xúc tự do. "
+            "Sự vắng mặt hoàn toàn của các ký tự này cũng là một tín hiệu."
+        ),
+    },
+
+    # ── Layout & Formatting ───────────────────────────────────────────────
+    "empty_line_ratio": {
+        "human": (
+            "Người viết code thường xuống dòng theo thói quen và cảm giác — "
+            "đôi khi để trống 2–3 dòng liên tiếp giữa các hàm, đôi khi không "
+            "có dòng trống nào giữa các khối logic dài."
+        ),
+        "ai": (
+            "AI phân tách các hàm và khối lệnh bằng đúng một dòng trống, "
+            "cực kỳ nhất quán xuyên suốt toàn bộ file — tạo ra tỷ lệ dòng "
+            "trống ổn định và dễ nhận biết."
+        ),
+    },
+    "avg_line_length": {
+        "human": (
+            "Độ dài dòng trong code thủ công biến động lớn: có dòng chỉ vài ký "
+            "tự (khai báo biến đơn), lại có dòng dài bất thường do lười ngắt "
+            "hoặc viết inline expression phức tạp."
+        ),
+        "ai": (
+            "AI duy trì độ dài dòng trung bình đồng đều, thường trong khoảng "
+            "60–90 ký tự — không quá ngắn, không quá dài — theo đúng quy "
+            "chuẩn style guide mà không cần cưỡng ép."
+        ),
+    },
+    "max_line_length": {
+        "human": (
+            "Khi viết vội, người lập trình hay để nguyên các biểu thức điều "
+            "kiện dài hoặc chuỗi nối thành một dòng thay vì ngắt xuống, "
+            "dẫn đến những dòng vượt quá 120 ký tự."
+        ),
+        "ai": (
+            "AI tự động ngắt dòng ở những điểm hợp lý — sau toán tử, trước "
+            "tham số — để không có dòng nào quá dài, giữ toàn bộ code trong "
+            "giới hạn hiển thị tiêu chuẩn."
+        ),
+    },
+    "tab_vs_space_ratio": {
+        "human": (
+            "Code do nhiều người viết hoặc copy-paste từ nhiều nguồn thường "
+            "trộn lẫn Tab và Space trong cùng một file — một vấn đề quen thuộc "
+            "trong các dự án nhóm hoặc code học tập."
+        ),
+        "ai": (
+            "AI luôn sử dụng một kiểu thụt lề duy nhất (thường là 4 spaces) "
+            "xuyên suốt toàn bộ file, không có ngoại lệ — tỷ lệ Tab/Space "
+            "bằng 0 hoặc 1 tuyệt đối."
+        ),
+    },
+    "trailing_space_ratio": {
+        "human": (
+            "Khoảng trắng thừa ở cuối dòng là dấu vết tự nhiên của quá trình "
+            "gõ phím thủ công — thêm rồi xóa, chỉnh sửa nhiều lần mà không "
+            "bao giờ dọn sạch."
+        ),
+        "ai": (
+            "Văn bản do AI sinh ra không có khoảng trắng thừa ở cuối dòng — "
+            "output được tạo ra đã ở trạng thái 'sạch' ngay từ đầu, "
+            "không qua quá trình gõ và xóa của con người."
+        ),
+    },
+    "brace_style_consistency": {
+        "human": (
+            "Phong cách mở ngoặc nhọn thường không nhất quán trong cùng một "
+            "file: lúc mở cùng dòng với điều kiện, lúc xuống dòng mới — "
+            "phụ thuộc vào thói quen cá nhân từng thời điểm viết."
+        ),
+        "ai": (
+            "AI tuân thủ một phong cách ngoặc nhọn duy nhất xuyên suốt "
+            "toàn bộ file mà không có ngoại lệ — mức độ nhất quán này "
+            "gần như không thể đạt được bằng cách gõ tay."
+        ),
+    },
+    "newline_style_ratio": {
+        "human": (
+            "Trong cùng một file, thường xuất hiện cả '\\n' lẫn 'endl' xen kẽ "
+            "nhau — phản ánh việc code được viết ở nhiều thời điểm khác nhau "
+            "hoặc chắp vá từ nhiều nguồn."
+        ),
+        "ai": (
+            "AI chọn một phong cách xuống dòng duy nhất ('\\n' hoặc 'endl') "
+            "và áp dụng nhất quán từ đầu đến cuối file — không có sự "
+            "pha trộn ngẫu nhiên."
+        ),
+    },
+
+    # ── Naming Conventions ────────────────────────────────────────────────
+    "avg_identifier_length": {
+        "human": (
+            "Người lập trình hay viết tắt tên biến để gõ nhanh hơn: 'cnt' "
+            "thay vì 'count', 'res' thay vì 'result', 'tmp' thay vì 'temporary'. "
+            "Độ dài tên định danh trung bình vì vậy thường ngắn hơn."
+        ),
+        "ai": (
+            "AI ưu tiên đặt tên đầy đủ, có nghĩa rõ ràng: 'studentCount', "
+            "'calculatedResult', 'temporaryBuffer'. Độ dài trung bình cao hơn "
+            "và phản ánh nguyên tắc clean code một cách máy móc."
+        ),
+    },
+    "identifier_length_variance": {
+        "human": (
+            "Tên biến trong code thủ công có độ dài biến động lớn: biến vòng "
+            "lặp cực ngắn ('i', 'j'), biến kết quả trung bình ('result'), "
+            "biến cấu trúc dài hơn ('adjacencyMatrix') — sự đa dạng tự nhiên."
+        ),
+        "ai": (
+            "AI đặt tên với độ dài đồng đều hơn nhiều — kể cả biến vòng lặp "
+            "cũng được đặt tên như 'index' hoặc 'iterator'. Phương sai thấp "
+            "bất thường là dấu hiệu của việc áp dụng quy tắc một cách cứng nhắc."
+        ),
+    },
+    "single_char_var_ratio": {
+        "human": (
+            "Dùng biến một ký tự ('i', 'j', 'k', 'n', 'x') là thói quen cực "
+            "kỳ phổ biến trong code thuật toán và vòng lặp — nhanh, quen tay, "
+            "và hoàn toàn hợp lý trong ngữ cảnh toán học."
+        ),
+        "ai": (
+            "AI hiếm khi dùng biến một ký tự, kể cả trong vòng lặp đơn giản. "
+            "Thay vào đó sẽ là 'index', 'row', 'col' — tuân thủ clean code "
+            "đến mức đôi khi trở nên dài dòng không cần thiết."
+        ),
+    },
+    "unique_identifier_ratio": {
+        "human": (
+            "Người lập trình thường tái sử dụng cùng tên biến cho các biến "
+            "tạm thời trong nhiều vòng lặp hoặc hàm khác nhau — 'temp', 'aux', "
+            "'buf' xuất hiện nhiều lần với vai trò khác nhau."
+        ),
+        "ai": (
+            "AI tạo ra tên định danh đa dạng và riêng biệt cho từng ngữ cảnh, "
+            "khiến tỷ lệ định danh không trùng lặp cao hơn đáng kể so với "
+            "code được viết thủ công trong thời gian ngắn."
+        ),
+    },
+    "keyword_to_identifier_ratio": {
+        "human": (
+            "Code viết nhanh thường dựa nhiều vào các cấu trúc ngôn ngữ có "
+            "sẵn (if, for, while, return) và ít khai báo hàm hay biến tự định "
+            "nghĩa — dẫn đến tỷ lệ từ khóa/định danh cao."
+        ),
+        "ai": (
+            "AI phân tách logic thành nhiều hàm con và cấu trúc phụ trợ, "
+            "tạo ra nhiều định danh tự định nghĩa hơn — kéo tỷ lệ "
+            "từ khóa/định danh xuống thấp hơn."
+        ),
+    },
+
+    # ── Structural Complexity ─────────────────────────────────────────────
+    "avg_cyclomatic_complexity": {
+        "human": (
+            "Người lập trình hay dồn toàn bộ logic vào một hoặc vài hàm lớn "
+            "với nhiều nhánh if/else và vòng lặp lồng nhau — khiến độ phức "
+            "tạp nhánh điều kiện trung bình trên mỗi hàm cao hơn."
+        ),
+        "ai": (
+            "AI phân tách điều kiện phức tạp thành các hàm nhỏ chuyên biệt, "
+            "giữ cho mỗi hàm chỉ xử lý một vài nhánh — độ phức tạp trung "
+            "bình thấp và đồng đều hơn trên toàn bộ codebase."
+        ),
+    },
+    "num_functions": {
+        "human": (
+            "Code học tập hoặc bài tập ngắn thường có ít hàm — đôi khi chỉ "
+            "có hàm 'main' chứa toàn bộ logic, viết theo phong cách tuyến "
+            "tính từ trên xuống dưới."
+        ),
+        "ai": (
+            "AI tự động phân tách mã nguồn thành nhiều hàm nhỏ có chức năng "
+            "rõ ràng — số lượng hàm nhiều hơn đáng kể, mỗi hàm chỉ "
+            "thực hiện một nhiệm vụ cụ thể."
+        ),
+    },
+    "avg_function_loc": {
+        "human": (
+            "Hàm trong code thủ công thường dài hơn vì người viết có xu "
+            "hướng nhét nhiều xử lý vào cùng một chỗ thay vì tách ra — "
+            "số dòng trung bình mỗi hàm vì thế cao hơn."
+        ),
+        "ai": (
+            "AI tuân thủ nguyên tắc hàm ngắn gọn: mỗi hàm thường chỉ "
+            "10–30 dòng, làm đúng một việc. Số dòng trung bình thấp và "
+            "đồng đều là kết quả của việc áp dụng cứng nhắc quy tắc này."
+        ),
+    },
+    "halstead_volume": {
+        "human": (
+            "Code đơn giản hóa logic bằng cách dùng ít toán tử và toán hạng "
+            "độc lập — thường viết thẳng vào kết quả thay vì chia thành "
+            "nhiều bước trung gian. Halstead Volume vì thế thường thấp hơn."
+        ),
+        "ai": (
+            "AI tạo ra các biểu thức đầy đủ, rõ ràng với nhiều bước trung gian "
+            "và tên biến mô tả — dẫn đến Halstead Volume cao hơn, phản ánh "
+            "độ phong phú của từ vựng lập trình được dùng."
+        ),
+    },
+    "halstead_difficulty": {
+        "human": (
+            "Phong cách code thủ công thường lặp lại cùng một toán tử "
+            "trên nhiều toán hạng khác nhau (ví dụ: dùng '+' hoặc '==' "
+            "nhiều lần) — điều này làm tăng Halstead Difficulty do "
+            "tỷ lệ sử dụng toán tử không đa dạng."
+        ),
+        "ai": (
+            "AI phân phối toán tử đa dạng hơn và giảm tần suất lặp lại "
+            "của các toán tử thông dụng — Halstead Difficulty được giữ "
+            "ở mức cân bằng, không quá cao cũng không quá thấp."
+        ),
+    },
+    "halstead_effort": {
+        "human": (
+            "Code viết theo kiểu tuyến tính với các phép tính lặp lại "
+            "thủ công thay vì dùng hàm tiện ích — khiến Halstead Effort "
+            "phân phối không đều: vài đoạn rất phức tạp, phần còn lại rất đơn giản."
+        ),
+        "ai": (
+            "AI phân bổ độ phức tạp đều hơn trên toàn bộ file thông qua "
+            "việc dùng hàm phụ trợ và biểu thức chuẩn hóa — Halstead Effort "
+            "có xu hướng đồng đều và dễ dự đoán hơn."
+        ),
+    },
+    "halstead_bugs": {
+        "human": (
+            "Cấu trúc code lỏng lẻo — if lồng nhau sâu, logic dài trong "
+            "một hàm, biến dùng lại nhiều mục đích — tạo ra nhiều điểm "
+            "tiềm ẩn phát sinh lỗi theo ước lượng của Halstead."
+        ),
+        "ai": (
+            "Việc chia nhỏ hàm và sử dụng biến có tên rõ ràng giúp "
+            "AI tạo ra code có chỉ số lỗi ước tính thấp hơn — không "
+            "phải vì AI không mắc lỗi, mà vì cấu trúc ít phức tạp hơn."
+        ),
+    },
+    "maintainability_index": {
+        "human": (
+            "Hàm dài, lồng nhau sâu và thiếu chú thích là ba yếu tố chính "
+            "kéo Maintainability Index xuống thấp — cả ba đều phổ biến "
+            "trong code học tập và code viết nhanh dưới áp lực."
+        ),
+        "ai": (
+            "Nhờ hàm ngắn, thụt lề nhất quán và comment đầy đủ, MI của "
+            "code do AI tạo ra thường cao hơn ngưỡng 65 — mức được coi "
+            "là 'dễ bảo trì' theo tiêu chuẩn công nghiệp."
+        ),
+    },
+    "max_nesting_depth": {
+        "human": (
+            "Viết nhanh thường dẫn đến các khối if/for lồng nhau 4–5 cấp "
+            "mà không dừng lại để tái cấu trúc — đây là dấu hiệu điển hình "
+            "của code giải quyết vấn đề theo kiểu 'cứ chạy được là được'."
+        ),
+        "ai": (
+            "AI áp dụng kỹ thuật early return và tách hàm để giữ độ lồng "
+            "nhau tối đa ở 2–3 cấp — cấu trúc phẳng hơn và dễ đọc hơn, "
+            "nhưng đôi khi cũng mang lại cảm giác 'quá chỉn chu'."
+        ),
+    },
+
+    # ── Coding Habits ─────────────────────────────────────────────────────
+    "total_includes": {
+        "human": (
+            "Người lập trình hay thêm thư viện theo kiểu 'phòng thủ' — "
+            "include những gì mình quen dùng ngay từ đầu, kể cả khi "
+            "chưa chắc cần dùng đến trong bài cụ thể này."
+        ),
+        "ai": (
+            "AI include chính xác những thư viện cần thiết cho bài toán "
+            "đang giải quyết — không thừa, không thiếu. Tính chính xác "
+            "này đôi khi trở thành dấu hiệu nhận biết."
+        ),
+    },
+    "has_bits_stdc": {
+        "human": (
+            "'#include <bits/stdc++.h>' là đặc sản của cộng đồng competitive "
+            "programming — một dòng thay thế toàn bộ thư viện chuẩn, "
+            "phổ biến đến mức nhiều người dùng theo phản xạ."
+        ),
+        "ai": (
+            "AI hầu như không dùng <bits/stdc++.h> vì thư viện này không "
+            "tương thích với nhiều compiler và đi ngược nguyên tắc 'include "
+            "chỉ những gì cần thiết' của lập trình dự án thực tế."
+        ),
+    },
+    "macro_count": {
+        "human": (
+            "Macro như '#define pb push_back', '#define ll long long', "
+            "'#define INF 1e18' là công cụ gõ nhanh quen thuộc của "
+            "người học qua competitive programming — tiện nhưng khó debug."
+        ),
+        "ai": (
+            "AI sử dụng 'constexpr', 'using', hoặc viết đầy đủ tên "
+            "thay vì macro — theo triết lý Modern C++ vốn xem macro "
+            "là di sản của C cần tránh trong code mới."
+        ),
+    },
+    "modern_cpp_ratio": {
+        "human": (
+            "Code học tập thường theo các ví dụ cũ hoặc giáo trình viết "
+            "theo chuẩn C++03/C++11 — hiếm khi dùng 'auto', 'nullptr', "
+            "range-based for, hay lambda trừ khi được yêu cầu rõ ràng."
+        ),
+        "ai": (
+            "AI sử dụng các tính năng Modern C++ (auto, nullptr, constexpr, "
+            "structured bindings, lambda) một cách tự nhiên và nhất quán — "
+            "phản ánh việc được huấn luyện trên codebase hiện đại."
+        ),
+    },
+    "const_usage_ratio": {
+        "human": (
+            "Khai báo 'const' thường bị bỏ qua trong code viết nhanh — "
+            "người lập trình ít nghĩ đến tính bất biến của biến trừ khi "
+            "bị yêu cầu hoặc gặp lỗi liên quan."
+        ),
+        "ai": (
+            "AI tích cực đánh dấu 'const' cho mọi biến và tham số không "
+            "thay đổi giá trị — hành vi này nhất quán đến mức tỷ lệ "
+            "const/tổng biến cao hơn hẳn so với code thủ công."
+        ),
+    },
+    "has_fast_io": {
+        "human": (
+            "'ios_base::sync_with_stdio(false); cin.tie(NULL);' là hai dòng "
+            "quen thuộc trong code thi đấu — nhiều người thêm vào theo thói "
+            "quen ngay cả khi bài không có yêu cầu xử lý input lớn."
+        ),
+        "ai": (
+            "AI thường không thêm tối ưu hóa nhập/xuất này trong code "
+            "ứng dụng thông thường — chỉ xuất hiện khi prompt yêu cầu "
+            "rõ ràng về hiệu năng I/O."
+        ),
+    },
+    "using_std_ratio": {
+        "human": (
+            "'using namespace std;' ở đầu file là lựa chọn của hơn 80% "
+            "người học C++ — tiết kiệm gõ phím và đơn giản hóa code "
+            "trong bối cảnh học tập và thi đấu."
+        ),
+        "ai": (
+            "AI viết rõ tiền tố 'std::' cho từng định danh thay vì dùng "
+            "namespace toàn cục — tránh ô nhiễm namespace là nguyên tắc "
+            "chuẩn trong lập trình dự án thực tế."
+        ),
+    },
+    "try_catch_ratio": {
+        "human": (
+            "Xử lý ngoại lệ thường bị bỏ qua hoàn toàn trong code học tập "
+            "và thuật toán — người viết tập trung vào logic chính, "
+            "coi việc bắt lỗi là overhead không cần thiết."
+        ),
+        "ai": (
+            "AI chủ động đặt khối try-catch ở các vùng có nguy cơ phát "
+            "sinh lỗi — đặc biệt khi làm việc với file, network, hay "
+            "dynamic cast. Mật độ try-catch cao hơn là dấu hiệu rõ ràng."
+        ),
+    },
+    "raw_pointer_ratio": {
+        "human": (
+            "Con trỏ thô ('int* p = new int[n]') vẫn phổ biến trong code "
+            "học C++ vì được dạy trước smart pointer — quản lý bộ nhớ "
+            "thủ công là kỹ năng cơ bản nhưng dễ gây memory leak."
+        ),
+        "ai": (
+            "AI hạn chế tối đa con trỏ thô, ưu tiên 'unique_ptr', "
+            "'shared_ptr', hoặc tham chiếu thông thường — phản ánh "
+            "best practice của Modern C++ về quản lý bộ nhớ an toàn."
+        ),
+    },
+    "std_prefix_ratio": {
+        "human": (
+            "Khi đã dùng 'using namespace std;', tiền tố 'std::' biến mất "
+            "hoàn toàn. Khi không dùng namespace, đôi khi vẫn quên thêm "
+            "tiền tố — tạo ra tỷ lệ sử dụng 'std::' không nhất quán."
+        ),
+        "ai": (
+            "AI viết đầy đủ và nhất quán 'std::' cho tất cả định danh "
+            "từ thư viện chuẩn, ngay cả những cái rất phổ biến như "
+            "'std::endl', 'std::string' — tỷ lệ 100% hoặc gần tuyệt đối."
+        ),
+    },
+    "cpp_cast_ratio": {
+        "human": (
+            "Ép kiểu theo phong cách C '(int)value' hoặc '(double)n' "
+            "vẫn phổ biến vì ngắn gọn và dễ viết — người học thường "
+            "không phân biệt giữa các loại cast trong C++."
+        ),
+        "ai": (
+            "AI sử dụng các toán tử ép kiểu an toàn của C++ "
+            "('static_cast<int>()', 'dynamic_cast<>()') — dài hơn nhưng "
+            "rõ ý định hơn và được compiler kiểm tra chặt chẽ hơn."
+        ),
+    },
+
+    # ── Information Theory ────────────────────────────────────────────────
+    "shannon_entropy": {
+        "human": (
+            "Code viết trong môi trường áp lực (bài tập, thi cử) thường "
+            "dùng từ vựng hạn chế và lặp lại cấu trúc — entropy thấp "
+            "phản ánh sự đồng nhất về phong cách trong khoảng thời gian ngắn."
+        ),
+        "ai": (
+            "AI tạo ra từ vựng phong phú hơn: tên biến đa dạng, comment "
+            "mô tả chi tiết, cấu trúc câu lệnh nhiều dạng — entropy cao "
+            "hơn là dấu hiệu của việc tổng hợp từ nhiều nguồn khác nhau."
+        ),
+    },
+    "bigram_entropy": {
+        "human": (
+            "Cặp ký tự lặp đi lặp lại theo thói quen gõ phím cá nhân "
+            "(vd: tên viết tắt yêu thích, pattern vòng lặp quen thuộc) "
+            "làm giảm bigram entropy so với văn bản đa dạng hơn."
+        ),
+        "ai": (
+            "Bigram entropy cân bằng hơn trong code do AI tạo ra — sự "
+            "đa dạng trong cách ghép từ, lệnh và identifier phản ánh "
+            "việc tổng hợp từ nhiều phong cách viết code khác nhau."
+        ),
+    },
+    "whitespace_entropy": {
+        "human": (
+            "Cách dùng khoảng trắng của người lập trình mang tính ngẫu "
+            "nhiên cao — lúc thêm space quanh toán tử, lúc không; "
+            "entropy khoảng trắng cao phản ánh sự tùy tiện này."
+        ),
+        "ai": (
+            "AI tuân thủ quy tắc khoảng trắng nhất quán (luôn space "
+            "quanh toán tử, không space trước dấu chấm phẩy) — "
+            "entropy thấp là kết quả của sự nhất quán hoàn hảo."
+        ),
+    },
+
+    # ── OOP Structure ─────────────────────────────────────────────────────
+    "class_count": {
+        "human": (
+            "Code giải thuật ngắn và bài tập thường được viết theo "
+            "phong cách thủ tục — không có class nào, hoặc chỉ dùng "
+            "struct để gom nhóm dữ liệu."
+        ),
+        "ai": (
+            "AI tổ chức chương trình bằng class kể cả với bài toán đơn "
+            "giản — tạo ra số lượng class nhiều hơn kỳ vọng, phản ánh "
+            "việc áp dụng cứng nhắc nguyên tắc OOP."
+        ),
+    },
+    "struct_count": {
+        "human": (
+            "Struct được dùng rộng rãi trong code thuật toán để gom nhóm "
+            "các thuộc tính liên quan (tọa độ, cạnh đồ thị, thông tin node) "
+            "theo phong cách C/C++ truyền thống."
+        ),
+        "ai": (
+            "AI phân biệt rõ giữa struct (chứa dữ liệu thuần túy) và "
+            "class (có hành vi và phương thức) — số lượng struct thường "
+            "ít hơn và được dùng đúng mục đích hơn."
+        ),
+    },
+    "has_inheritance": {
+        "human": (
+            "Kế thừa class hầu như không xuất hiện trong code bài tập "
+            "và thuật toán — người học thường chưa đến giai đoạn thiết "
+            "kế hệ thống phân cấp lớp."
+        ),
+        "ai": (
+            "AI chủ động sử dụng kế thừa khi bài toán phù hợp, tạo ra "
+            "hierarchy lớp rõ ràng — sự hiện diện của inheritance trong "
+            "code đơn giản là dấu hiệu đáng chú ý."
+        ),
+    },
+    "access_specifier_ratio": {
+        "human": (
+            "Phân chia public/private/protected thường không được chú "
+            "trọng — many người để toàn bộ thuộc tính public cho "
+            "tiện truy cập trực tiếp mà không nghĩ đến encapsulation."
+        ),
+        "ai": (
+            "AI phân chia access specifier rõ ràng theo nguyên tắc OOP: "
+            "private cho dữ liệu nội bộ, public cho interface — "
+            "tỷ lệ sử dụng access specifier cao và nhất quán."
+        ),
+    },
+    "virtual_override_ratio": {
+        "human": (
+            "Cơ chế đa hình ảo (virtual/override) hầu như không xuất "
+            "hiện trong code học tập và thuật toán — đây là tính năng "
+            "nâng cao dành cho thiết kế hệ thống phức tạp."
+        ),
+        "ai": (
+            "AI dùng virtual và override khi thiết kế class hierarchy, "
+            "kể cả trong những ví dụ không nhất thiết cần đến — "
+            "sự hiện diện của chúng trong code đơn giản là tín hiệu rõ ràng."
+        ),
+    },
+    "getter_setter_ratio": {
+        "human": (
+            "Thay vì viết getter/setter, người lập trình thường để "
+            "thuộc tính public và truy cập trực tiếp — nhanh hơn "
+            "khi viết, nhưng phá vỡ nguyên tắc encapsulation."
+        ),
+        "ai": (
+            "AI viết getter/setter đầy đủ cho hầu hết thuộc tính private "
+            "kể cả khi không cần thiết — mật độ cao của getX()/setX() "
+            "là một trong những dấu hiệu OOP cứng nhắc đặc trưng của AI."
+        ),
     },
 }
 
+# ---------------------------------------------------------------------------
+# Feature display names (Vietnamese)
+# ---------------------------------------------------------------------------
 FEATURE_DISPLAY_NAMES_VN: dict[str, str] = {
-    "comment_ratio": "Mật độ chú thích",
-    "empty_line_ratio": "Tỷ lệ dòng trắng",
-    "avg_line_length": "Độ dài dòng trung bình",
-    "max_line_length": "Độ dài dòng tối đa",
-    "tab_vs_space_ratio": "Tỷ lệ Tab/Space",
-    "trailing_space_ratio": "Khoảng trắng thừa cuối dòng",
-    "brace_style_consistency": "Nhất quán mở ngoặc nhọn",
-    "avg_identifier_length": "Độ dài tên định danh trung bình",
-    "identifier_length_variance": "Biến động độ dài tên định danh",
-    "single_char_var_ratio": "Tỷ lệ biến một ký tự",
-    "unique_identifier_ratio": "Tỷ lệ định danh độc nhất",
-    "keyword_to_identifier_ratio": "Tỷ lệ từ khóa/tên định danh",
+    # Comment & Style
+    "comment_ratio":             "Mật độ chú thích",
+    "code_to_comment_ratio":     "Tỷ lệ code / chú thích",
+    "emoji_marker_score":        "Dấu ấn cá nhân (emoji/ký hiệu)",
+
+    # Layout & Formatting
+    "empty_line_ratio":          "Tỷ lệ dòng trắng",
+    "avg_line_length":           "Độ dài dòng trung bình",
+    "max_line_length":           "Độ dài dòng tối đa",
+    "tab_vs_space_ratio":        "Kiểu thụt lề (Tab / Space)",
+    "trailing_space_ratio":      "Khoảng trắng thừa cuối dòng",
+    "brace_style_consistency":   "Tính nhất quán ngoặc nhọn",
+    "newline_style_ratio":       "Tính nhất quán xuống dòng",
+
+    # Naming Conventions
+    "avg_identifier_length":         "Độ dài tên định danh trung bình",
+    "identifier_length_variance":    "Độ biến động độ dài tên định danh",
+    "single_char_var_ratio":         "Tỷ lệ biến một ký tự",
+    "unique_identifier_ratio":       "Tỷ lệ định danh không trùng lặp",
+    "keyword_to_identifier_ratio":   "Tỷ lệ từ khóa / định danh tự định nghĩa",
+
+    # Structural Complexity
     "avg_cyclomatic_complexity": "Độ phức tạp nhánh điều kiện trung bình",
-    "num_functions": "Số lượng hàm",
-    "avg_function_loc": "Độ dài hàm trung bình",
-    "halstead_volume": "Độ phức tạp thuật toán (Halstead Volume)",
-    "halstead_difficulty": "Độ khó lập trình (Halstead Difficulty)",
-    "halstead_effort": "Công sức lập trình (Halstead Effort)",
-    "halstead_bugs": "Dự báo số lỗi (Halstead Bugs)",
-    "maintainability_index": "Chỉ số dễ bảo trì",
-    "code_to_comment_ratio": "Tỷ lệ Code/Comment",
-    "max_nesting_depth": "Độ sâu lồng nhau tối đa",
-    "total_includes": "Số lượng thư viện import",
-    "has_bits_stdc": "Sử dụng thư viện bits/stdc++.h",
-    "macro_count": "Số lượng Macro khai báo",
-    "modern_cpp_ratio": "Tỷ lệ sử dụng Modern C++",
-    "const_usage_ratio": "Tỷ lệ sử dụng từ khóa const",
-    "has_fast_io": "Tối ưu hóa nhập xuất Fast I/O",
-    "newline_style_ratio": "Nhất quán phong cách xuống dòng",
-    "shannon_entropy": "Độ đa dạng từ vựng (Entropy)",
-    "bigram_entropy": "Độ biến động cặp ký tự",
-    "whitespace_entropy": "Nhất quán khoảng trắng",
-    "class_count": "Số lượng lớp (Class)",
-    "struct_count": "Số lượng cấu trúc (Struct)",
-    "has_inheritance": "Sử dụng tính kế thừa lớp",
-    "access_specifier_ratio": "Tỷ lệ chỉ thị truy cập (OOP)",
-    "virtual_override_ratio": "Tỷ lệ đa hình (virtual/override)",
-    "using_std_ratio": "Sử dụng using namespace std",
-    "try_catch_ratio": "Tỷ lệ khối try-catch bắt lỗi",
-    "raw_pointer_ratio": "Tỷ lệ sử dụng con trỏ thô",
-    "getter_setter_ratio": "Sử dụng Getter/Setter",
-    "std_prefix_ratio": "Sử dụng tiền tố std::",
-    "cpp_cast_ratio": "Tỷ lệ ép kiểu C++ an toàn",
-    "emoji_marker_score": "Sử dụng biểu tượng cảm xúc (Emoji)",
+    "num_functions":             "Số lượng hàm",
+    "avg_function_loc":          "Số dòng trung bình mỗi hàm",
+    "halstead_volume":           "Độ phong phú từ vựng (Halstead Volume)",
+    "halstead_difficulty":       "Mức độ phức tạp toán tử (Halstead Difficulty)",
+    "halstead_effort":           "Ước tính công sức lập trình (Halstead Effort)",
+    "halstead_bugs":             "Dự báo lỗi tiềm ẩn (Halstead Bugs)",
+    "maintainability_index":     "Chỉ số khả năng bảo trì",
+    "max_nesting_depth":         "Độ sâu lồng nhau tối đa",
+
+    # Coding Habits
+    "total_includes":      "Số lượng thư viện được import",
+    "has_bits_stdc":       "Dùng <bits/stdc++.h>",
+    "macro_count":         "Số lượng macro (#define)",
+    "modern_cpp_ratio":    "Mức độ dùng tính năng Modern C++",
+    "const_usage_ratio":   "Tần suất dùng từ khóa const",
+    "has_fast_io":         "Tối ưu hóa nhập/xuất (Fast I/O)",
+    "using_std_ratio":     "Dùng 'using namespace std'",
+    "try_catch_ratio":     "Tần suất khối xử lý ngoại lệ (try-catch)",
+    "raw_pointer_ratio":   "Tỷ lệ sử dụng con trỏ thô",
+    "std_prefix_ratio":    "Tần suất viết tiền tố std::",
+    "cpp_cast_ratio":      "Tần suất dùng ép kiểu C++ an toàn",
+
+    # Information Theory
+    "shannon_entropy":    "Độ đa dạng từ vựng (Shannon Entropy)",
+    "bigram_entropy":     "Độ biến động cặp ký tự (Bigram Entropy)",
+    "whitespace_entropy": "Tính nhất quán khoảng trắng",
+
+    # OOP Structure
+    "class_count":              "Số lượng lớp (class)",
+    "struct_count":             "Số lượng cấu trúc (struct)",
+    "has_inheritance":          "Sử dụng kế thừa lớp",
+    "access_specifier_ratio":   "Tỷ lệ chỉ thị truy cập (public/private/protected)",
+    "virtual_override_ratio":   "Tỷ lệ sử dụng đa hình (virtual/override)",
+    "getter_setter_ratio":      "Tần suất dùng getter/setter",
 }
 
 _CATEGORY_MAP: dict[str, str] = {

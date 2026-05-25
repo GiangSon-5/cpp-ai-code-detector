@@ -57,3 +57,8 @@ data/
 datasets/
 
 de_xuat_cai_thien_he_thong.md
+rate_limits_by_model.json
+test_gemini/
+behavioral_insights_rewrite.txt
+
+tests/
