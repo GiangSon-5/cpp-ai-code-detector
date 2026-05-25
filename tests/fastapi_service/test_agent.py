@@ -109,36 +109,70 @@ async def test_node_judge_ppl_conflict(agent_service):
 
 @pytest.mark.asyncio
 async def test_node_judge_ml_dl_conflict_with_fusion(agent_service):
-    """Test when DL and ML have a conflict, and DL is in the zone [0.45, 0.75]. Fusion should apply."""
+    """Test when DL and ML have opposite labels, and gap >= 0.40, DL is in [0.45, 0.75]. Fusion applies."""
     result = await agent_service._node_judge(
-        mean_score=0.71,
+        mean_score=0.71, # AI
         perplexity=2.0,
         raw_code="int x = 0;",
         current_model_type="NORMAL",
         chunks=[],
-        ml_score=0.0
+        ml_score=0.20 # Human, gap = 0.51
     )
     
     assert result["ml_dl_conflict"] is True
-    assert result["ml_dl_gap"] == 0.71
+    assert result["ml_dl_gap"] == 0.51
     assert result["fusion_applied"] is True
-    # final_score = 0.70 * 0.71 + 0.30 * 0.0 = 0.497
-    assert abs(result["final_score"] - 0.497) < 1e-6
+    # final_score = 0.70 * 0.71 + 0.30 * 0.20 = 0.497 + 0.060 = 0.557
+    assert abs(result["final_score"] - 0.557) < 1e-6
 
 
 @pytest.mark.asyncio
 async def test_node_judge_ml_dl_conflict_no_fusion(agent_service):
-    """Test when DL and ML have a conflict, but DL is very confident (not in [0.45, 0.75]). No fusion."""
+    """Test when DL and ML have opposite labels and gap >= 0.40, but DL is confident (not in [0.45, 0.75]). No fusion."""
     result = await agent_service._node_judge(
-        mean_score=0.95,
+        mean_score=0.95, # AI
         perplexity=2.0,
         raw_code="int x = 0;",
         current_model_type="NORMAL",
         chunks=[],
-        ml_score=0.10
+        ml_score=0.10 # Human, gap = 0.85
     )
     
     assert result["ml_dl_conflict"] is True
     assert result["ml_dl_gap"] == 0.85
     assert result["fusion_applied"] is False
     assert result["final_score"] == 0.95
+
+
+@pytest.mark.asyncio
+async def test_node_judge_ml_dl_no_conflict_same_label(agent_service):
+    """Test when DL and ML have gap >= 0.40, but both predict the same class (both AI). No conflict."""
+    result = await agent_service._node_judge(
+        mean_score=0.95, # AI
+        perplexity=2.0,
+        raw_code="int x = 0;",
+        current_model_type="NORMAL",
+        chunks=[],
+        ml_score=0.55 # AI, gap = 0.40
+    )
+    
+    assert result["ml_dl_conflict"] is False
+    assert result["ml_dl_gap"] == 0.40
+    assert result["fusion_applied"] is False
+
+
+@pytest.mark.asyncio
+async def test_node_judge_ml_dl_no_conflict_small_gap(agent_service):
+    """Test when DL and ML have opposite labels, but gap < 0.40. No conflict."""
+    result = await agent_service._node_judge(
+        mean_score=0.55, # AI
+        perplexity=2.0,
+        raw_code="int x = 0;",
+        current_model_type="NORMAL",
+        chunks=[],
+        ml_score=0.45 # Human, gap = 0.10
+    )
+    
+    assert result["ml_dl_conflict"] is False
+    assert result["ml_dl_gap"] == 0.10
+    assert result["fusion_applied"] is False

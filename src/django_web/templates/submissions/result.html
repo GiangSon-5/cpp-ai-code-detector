@@ -79,10 +79,12 @@
 
     <div class="flex-1 overflow-y-auto custom-scrollbar p-8">
       {% if result.fingerprint %}
+        {% if not result.ml_dl_conflict %}
         <div class="card mb-6" style="border-radius:20px;padding:24px;background:rgba(34,211,238,0.04);border-color:rgba(34,211,238,0.1);">
           <h4 class="text-xs font-black uppercase tracking-widest mb-3" style="color:#22d3ee;">Executive Summary</h4>
           <p class="text-sm leading-relaxed" style="color:#cbd5e1;font-weight:300;">{{ result.fingerprint.executive_summary|safe }}</p>
         </div>
+        {% endif %}
 
         <!-- Contrastive XAI -->
         {% if result.ml_dl_conflict %}
@@ -270,6 +272,11 @@
               </div>
             </div>
           </div>
+        </div>
+        {% endif %}
+        {% if result.ml_dl_conflict %}
+        <div class="mb-5 p-4 rounded-2xl text-xs text-yellow-400/80 bg-yellow-400/5 border border-yellow-400/20 leading-relaxed">
+          💡 <strong>Giải thích đặc trưng:</strong> Các tín hiệu hình thái màu xanh lá (Human) dưới đây là các thói quen viết mã thực tế đã khiến mô hình Học máy (ML) nhận diện nhầm đoạn code AI này thành Human-written code.
         </div>
         {% endif %}
 

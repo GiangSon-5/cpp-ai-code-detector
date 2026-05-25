@@ -447,8 +447,14 @@ class AgentService:
         fusion_applied = False
         if ml_score is not None:
             gap = abs(final_score - ml_score)
-            ml_dl_conflict = gap > 0.70  # ngưỡng mâu thuẫn nghiêm trọng
             ml_dl_gap = round(gap, 3)
+
+            # Mâu thuẫn khi nhãn đối lập và độ lệch >= 40%
+            dl_label_ai = final_score >= 0.50
+            ml_label_ai = ml_score >= 0.50
+            opposite_labels = dl_label_ai != ml_label_ai
+
+            ml_dl_conflict = opposite_labels and gap >= 0.40
 
             # Chỉ can thiệp khi DL không quá tự tin (tránh ML kéo sai)
             if ml_dl_conflict and 0.45 <= final_score <= 0.75:
@@ -457,7 +463,7 @@ class AgentService:
                 logger.info(
                     module="agent_service",
                     function="_node_judge",
-                    message=f"Controlled Adaptive Fusion applied: "
+                    message=f"Controlled Adaptive Fusion applied (Refined): "
                             f"DL={mean_score:.4f}, ML={ml_score:.4f}, Fusion Score={final_score:.4f}",
                 )
 
