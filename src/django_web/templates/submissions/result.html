@@ -45,7 +45,7 @@
 <!-- Ambiguous warning -->
 {% if result.is_ambiguous %}
 <div class="alert alert-warning mb-6">
-  <span>⚠️ Ambiguous result — AI judge applied self-correction (retry {{ result.retry_count }})</span>
+  <span>🔴 Ambiguous result — AI judge applied self-correction (retry {{ result.retry_count }})</span>
   <button class="alert-close" onclick="this.parentElement.remove()">✕</button>
 </div>
 {% endif %}
@@ -54,9 +54,8 @@
 {% if result.ml_dl_conflict %}
 <div class="alert alert-danger mb-6" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:16px; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
   <div class="flex items-center gap-3">
-    <span style="font-size: 1.2rem;">⚠️</span>
     <div>
-      <strong class="text-white block font-bold text-sm">Phát hiện mâu thuẫn lớn (DL vs ML Conflict)!</strong>
+      <strong class="text-white block font-bold text-sm">🔴 Phát hiện mâu thuẫn lớn (DL vs ML Conflict)!</strong>
       <span class="text-xs" style="color:#cbd5e1;">DL dự đoán {{ result.dl_score_pct|floatformat:1 }}% nhưng ML dự đoán {{ result.ml_score_pct|floatformat:1 }}% (Lệch {{ result.ml_dl_gap_pct|floatformat:1 }}%). {% if result.fusion_applied %}Đã áp dụng Fusion để hiệu chỉnh điểm cuối thành {{ result.final_score_pct|floatformat:1 }}%.{% else %}Giữ nguyên quyết định của mô hình DL do độ tin cậy cao.{% endif %}</span>
     </div>
   </div>
@@ -90,15 +89,14 @@
         {% if result.ml_dl_conflict %}
         <div class="card mb-6 animate-slide-up" style="border-radius:20px; padding:24px; border: 1px dashed rgba(248,113,113,0.3); background:rgba(248,113,113,0.03);">
           <div class="flex items-center gap-2 mb-3">
-            <span style="font-size: 1.1rem;">⚠️</span>
-            <h4 class="text-xs font-black uppercase tracking-widest text-red-400">Phát hiện mâu thuẫn phân tích (Contrastive XAI — Lệch {{ result.ml_dl_gap_pct }}%)</h4>
+            <h4 class="text-xs font-black uppercase tracking-widest text-red-400">🔴 Phát hiện mâu thuẫn phân tích (Contrastive XAI — Lệch {{ result.ml_dl_gap_pct }}%)</h4>
           </div>
           
           <div class="grid grid-cols-2 gap-6 border-b pb-4 mb-4" style="border-color:rgba(255,255,255,0.06);">
             <!-- ML Panel -->
             <div style="border-right:1px solid rgba(255,255,255,0.05); padding-right:16px;">
               <p class="text-xs font-bold text-yellow-400 mb-3 flex items-center gap-1.5">
-                <span>📊</span> Phong cách bề ngoài (ML · LightGBM + SHAP)
+                Phong cách bề ngoài (ML · LightGBM + SHAP)
               </p>
               
               <div class="space-y-3">
@@ -145,7 +143,7 @@
             <!-- DL Panel -->
             <div>
               <p class="text-xs font-bold text-indigo-400 mb-3 flex items-center gap-1.5">
-                <span>🧠</span> Cấu trúc logic sâu (DL · RoBERTa Ensemble)
+                Cấu trúc logic sâu (DL · RoBERTa Ensemble)
               </p>
               <p class="text-[10px] text-slate-400 mb-3 leading-relaxed">
                 Mô hình được huấn luyện học nhận diện các đặc trưng ngữ nghĩa ẩn không thể đặc tả thủ công.
@@ -183,7 +181,7 @@
               </p>
               
               <div class="text-[10px] text-slate-400 space-y-2 border-t border-white/5 pt-2">
-                <p class="font-bold text-slate-300 text-[11px] mb-1">⚠️ Đặc trưng cấu trúc hỗ trợ (Proxy features):</p>
+                <p class="font-bold text-slate-300 text-[11px] mb-1">🔷 Đặc trưng cấu trúc hỗ trợ (Proxy features):</p>
                 {% if result.is_oop %}
                   <div class="flex gap-1.5 items-start">
                     <span class="text-indigo-400">🔷</span>
@@ -235,10 +233,10 @@
           
           <div class="text-xs text-slate-300 leading-relaxed space-y-2 pt-2">
             <p>
-              <strong class="text-white">🔎 Kết luận đối chiếu:</strong> Mã nguồn AI được viết với phong cách ngụy trang (AI-generated with human-like formatting). Giao diện ưu tiên kết luận của mô hình Học sâu (DL Decision) do mô hình Học máy (ML) dễ bị đánh lừa bởi phong cách định dạng bề ngoài.
+              <strong class="text-white">🔷 Kết luận đối chiếu:</strong> Mã nguồn AI được viết với phong cách ngụy trang (AI-generated with human-like formatting). Giao diện ưu tiên kết luận của mô hình Học sâu (DL Decision) do mô hình Học máy (ML) dễ bị đánh lừa bởi phong cách định dạng bề ngoài.
             </p>
             <p class="text-slate-400 text-[10px] italic bg-white/[0.01] p-2.5 rounded-xl border border-white/5">
-              💡 <strong>Lưu ý về Asymmetric Explainability:</strong> Đây là cơ chế giải thích bất đối xứng của hệ thống Hybrid. ML (LightGBM) sử dụng mô hình hộp trắng có thể giải thích chi tiết qua SHAP cho phong cách bề ngoài. Ngược lại, DL (RoBERTa) là mô hình hộp đen ngữ nghĩa sâu được diễn giải qua khoảng cách không gian embedding kết hợp với các đặc trưng cấu trúc đại diện (Proxy features).
+              🔷 <strong>Lưu ý về Asymmetric Explainability:</strong> Đây là cơ chế giải thích bất đối xứng của hệ thống Hybrid. ML (LightGBM) sử dụng mô hình hộp trắng có thể giải thích chi tiết qua SHAP cho phong cách bề ngoài. Ngược lại, DL (RoBERTa) là mô hình hộp đen ngữ nghĩa sâu được diễn giải qua khoảng cách không gian embedding kết hợp với các đặc trưng cấu trúc đại diện (Proxy features).
             </p>
           </div>
         </div>
@@ -276,7 +274,7 @@
         {% endif %}
         {% if result.ml_dl_conflict %}
         <div class="mb-5 p-4 rounded-2xl text-xs text-yellow-400/80 bg-yellow-400/5 border border-yellow-400/20 leading-relaxed">
-          💡 <strong>Giải thích đặc trưng:</strong> Các tín hiệu hình thái màu xanh lá (Human) dưới đây là các thói quen viết mã thực tế đã khiến mô hình Học máy (ML) nhận diện nhầm đoạn code AI này thành Human-written code.
+          🔷 <strong>Giải thích đặc trưng:</strong> Các tín hiệu hình thái màu xanh lá (Human) dưới đây là các thói quen viết mã thực tế đã khiến mô hình Học máy (ML) nhận diện nhầm đoạn code AI này thành Human-written code.
         </div>
         {% endif %}
 
