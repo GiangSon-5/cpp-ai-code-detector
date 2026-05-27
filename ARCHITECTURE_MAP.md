@@ -26,7 +26,7 @@ Dưới đây là bản đồ quy chiếu chi tiết từ thư mục vật lý �
 | ↳ MLOps Hub & Dashboard | `src/django_web/apps/dashboard/` | Giao diện giám sát hệ thống, Infra, VRAM, Models và Data Metrics. |
 | **FastAPI Orchestrator** | `src/fastapi_service/` | Trái tim điều phối AI Pipeline (Port 8001). |
 | ↳ API & SSE Streaming | `src/fastapi_service/routers/` | Cung cấp endpoints nhận code và trả kết quả realtime về cho client. |
-| ↳ AI Flow (LangGraph) | `src/fastapi_service/services/agent_service.py` | Định nghĩa luồng xử lý Agentic 4-node (Router → Analyzer → Judge → Critique). |
+| ↳ AI Flow (LangGraph) | `src/fastapi_service/services/agent_service.py` | Định nghĩa luồng xử lý Agentic 5-stage (Router → Analyzer → Fingerprint XAI → Judge → Critique) với Controlled Adaptive Fusion. |
 | ↳ AI Node Modules | `src/fastapi_service/engine/` | Chứa các module hỗ trợ: `llm_handler.py`, `fingerprint_engine.py`, `explainer.py`. |
 | **GPU Inference Server** | `src/local_gpu_server/` | Server riêng biệt quản lý VRAM & Model Inference (Port 8002). |
 | ↳ Core Model Execution | `src/local_gpu_server/engine.py` | Nơi nạp tạ (weights) model, cấu hình pipeline suy luận. |
@@ -64,7 +64,7 @@ Hệ thống ETL 3 tầng được chia tách rõ ràng thành các logic riêng
   - **Thư mục local cache:** `data_lake/bronze/`.
 
 - **🥈 Silver Layer (Feature Store):**
-  - **Logic:** Extract đặc trưng (32 Machine Learning features) và Tokenize (512 Deep Learning tokens). Data được chuẩn hóa dạng Parquet để phục vụ ML Training hiệu suất cao.
+  - **Logic:** Extract đặc trưng (44 Machine Learning features) và Tokenize (512 Deep Learning tokens). Data được chuẩn hóa dạng Parquet để phục vụ ML Training hiệu suất cao.
   - **File thực thi:** `src/data_pipeline/bronze_to_silver/etl.py` (Chứa logic trích xuất).
   - **Worker kích hoạt:** `src/celery_workers/tasks/silver_tasks.py`.
 

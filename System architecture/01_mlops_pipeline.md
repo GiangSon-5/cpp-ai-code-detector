@@ -33,27 +33,31 @@ Code C++ (raw_code)
           └──────────────┬────────────────┘
                          ▼
 ┌──────────────────────────────────────────────────┐
-│  NODE ③  JUDGE  (Self-Correction)                │
-│  Phát hiện vùng nhập nhằng → thử model ngược     │
-│  Ambiguous: 0.40 ≤ score ≤ 0.60                  │
-│  PPL Conflict: score > 0.60 AND ppl > 5.0        │
-│  → final_score, is_ambiguous, retry_count        │
+│  NODE ③  FINGERPRINT XAI (Local, no GPU)         │
+│  CppFeatureExtractorV8.extract()                 │
+│  → 44 features → LightGBM.predict_proba()        │
+│  → SHAP.shap_values() → ShapFeature list         │
+│  → FingerprintResult (executive_summary, top5)   │
+│  (Chạy trước để cung cấp ml_score cho Judge node)│
 └────────────────────────┬─────────────────────────┘
+                         │
                          ▼
 ┌──────────────────────────────────────────────────┐
-│  NODE ④  CRITIQUE  (Map-Reduce LLM)              │
+│  NODE ④  JUDGE (Self-Correction & Fusion)         │
+│  1. Self-Correction if Ambiguous/PPL Conflict    │
+│  2. Controlled Adaptive Fusion if DL-ML Conflict │
+│  → final_score, is_ambiguous, ml_dl_conflict,    │
+│    ml_dl_gap, fusion_applied, retry_count        │
+└────────────────────────┬─────────────────────────┘
+                         │
+                         ▼
+┌──────────────────────────────────────────────────┐
+│  NODE ⑤  CRITIQUE  (Map-Reduce LLM)              │
 │  Mỗi chunk → generate_critique() [Map]           │
 │  Tất cả critique → generate_global_critique()[Reduce]│
 │  → chunk.critique, global_critique               │
 └────────────────────────┬─────────────────────────┘
-                         ▼
-┌──────────────────────────────────────────────────┐
-│  NODE ⑤  FINGERPRINT XAI  (Local, no GPU)       │
-│  CppFeatureExtractorV8.extract()                 │
-│  → 32 features → LightGBM.predict_proba()        │
-│  → SHAP.shap_values() → ShapFeature list         │
-│  → FingerprintResult (executive_summary, top5)   │
-└────────────────────────┬─────────────────────────┘
+                         │
                          ▼
               AnalyzeResponse (JSON)
               GoldPredictionRecord (DB)
@@ -173,36 +177,59 @@ burstiness  = std(exp(-lp) for lp)  # Biến thiên PPL
 
 ---
 
-## 5. Node ③ — Judge: Tự Sửa Lỗi (Self-Correction)
+## 5. Node ④ — Judge: Tự Sửa Lỗi & Hợp Nhất Thích Ứng (Self-Correction & Adaptive Fusion)
 
 **File:** `agent_service._node_judge()`
 
-### Điều kiện kích hoạt
+### 5.1 Cơ chế Tự Sửa Lỗi (Self-Correction)
+#### Điều kiện kích hoạt:
+- **Vùng nhập nhằng (Ambiguous zone):** `0.40 <= mean_score <= 0.60`
+- **Xung đột Perplexity (PPL conflict):** `mean_score > 0.60` (AI) nhưng `perplexity > 5.0` (Human)
 
 ```python
-in_ambiguous_zone = 0.40 <= mean_score <= 0.60
-ppl_conflict      = mean_score > 0.60 AND perplexity > 5.0
-
 if in_ambiguous_zone or ppl_conflict:
     # Thử model ngược (OOP↔NORMAL)
     opposite = "OOP" if current == "NORMAL" else "NORMAL"
     retry_result = roberta_engine.analyze(code, model_type=opposite, enable_lig=False)
     
-    # Chỉ chấp nhận kết quả mới nếu nó TỰ TIN HƠN (xa 0.5 hơn)
+    # Chỉ chấp nhận kết quả mới nếu nó TỰ TIN HƠN (xa biên 0.5 hơn)
     if abs(retry_score - 0.5) > abs(mean_score - 0.5):
         final_score = retry_score  # Chấp nhận self-correction
     else:
         final_score = mean_score   # Giữ nguyên kết quả cũ
 ```
 
+### 5.2 Cơ chế Hợp Nhất Thích Ứng Có Kiểm Soát (Controlled Adaptive Fusion)
+#### Điều kiện kích hoạt:
+Khi DL và ML có xung đột nghiêm trọng (`|DL - ML| >= 0.40` và dự đoán nhãn đối lập) và DL nằm trong vùng không quá tự tin (`0.45 <= DL <= 0.75`).
+```python
+ml_dl_conflict = False
+if ml_score is not None:
+    gap = abs(final_score - ml_score)
+    dl_label_ai = final_score >= 0.50
+    ml_label_ai = ml_score >= 0.50
+    opposite_labels = dl_label_ai != ml_label_ai
+    ml_dl_conflict = opposite_labels and gap >= 0.40
+
+    if ml_dl_conflict and 0.45 <= final_score <= 0.75:
+        # Áp dụng công thức Controlled Adaptive Fusion
+        final_score = 0.70 * final_score + 0.30 * ml_score
+        fusion_applied = True
+```
+
+#### Công thức toán học:
+$$\text{final\_score} = \begin{cases} 0.70 \cdot S_{DL} + 0.30 \cdot S_{ML} & \text{nếu } |S_{DL} - S_{ML}| \ge 0.40 \text{ và } S_{DL} \in [0.45, 0.75] \\ S_{DL} & \text{ngược lại} \end{cases}$$
+
 ### Kết quả
 
 | Field | Mô tả |
 |-------|-------|
-| `final_score` | Score sau khi Judge (có thể khác mean_score) |
-| `is_ambiguous` | True nếu Judge đã can thiệp |
+| `final_score` | Điểm số quyết định cuối cùng (0-1) |
+| `is_ambiguous` | True nếu rơi vào vùng ambiguous hoặc PPL conflict |
 | `retry_count` | Số lần thử lại (tối đa 1) |
-| `model_switched` | True nếu đã chuyển sang model khác |
+| `ml_dl_conflict` | True nếu có xung đột lớn giữa DL và ML |
+| `ml_dl_gap` | Khoảng cách tuyệt đối giữa DL score và ML score |
+| `fusion_applied` | True nếu đã áp dụng Controlled Adaptive Fusion |
 
 **Quyết định cuối:** `prediction = "AI GENERATED" if final_score >= 0.5 else "HUMAN WRITTEN"`
 
@@ -234,10 +261,10 @@ Tất cả LLM calls đều thử theo thứ tự:
 
 ---
 
-## 7. Node ⑤ — Fingerprint XAI: LightGBM + SHAP
+## 7. Node ③ — Fingerprint XAI: LightGBM + SHAP
 
 **File:** `engine/fingerprint_engine.py`  
-**Chạy local, không cần GPU** — `FingerprintEngine`
+**Chạy local, không cần GPU** — `FingerprintEngine` (chạy trước để Judge có `ml_score`)
 
 ### Pipeline
 
@@ -246,7 +273,7 @@ Code C++ (raw)
      │
      ▼
 CppFeatureExtractorV8.extract()   ← lizard, numpy, regex
-     │ → dict of 32 float features
+     │ → dict of 44 float features
      ▼
 StandardScaler.transform()         ← scaler.pkl
      │ → scaled feature vector
@@ -276,7 +303,7 @@ FingerprintResult(
 | `final_features.pkl` | Danh sách features LightGBM sử dụng |
 | `baselines.json` | Giá trị trung bình feature của AI vs Human |
 
-### 32 Features — Phân Loại
+### 44 Features — Phân Loại
 
 #### A. Layout & Formatting (6 features)
 | Feature | Ý nghĩa AI | Ý nghĩa Human |
@@ -327,6 +354,21 @@ FingerprintResult(
 | `bigram_entropy` | Đa dạng cặp ký tự kế nhau |
 | `whitespace_entropy` | Mẫu khoảng trắng — AI nhất quán hơn |
 
+#### F. OOP & Advanced Coding Habits (11 features)
+| Feature | Ý nghĩa AI | Ý nghĩa Human |
+|---------|-----------|--------------|
+| `class_count` | Dùng class có tổ chức | Ít dùng class |
+| `struct_count` | Dùng struct cho data object | Dùng tự do hoặc lạm dụng class |
+| `has_inheritance` | Có tính kế thừa (0/1) | Hiếm khi dùng kế thừa |
+| `access_specifier_ratio` | Phân quyền public/private chuẩn | Ít khai báo access specifier |
+| `virtual_override_ratio` | Dùng đa hình (virtual, override) | Ít dùng hoặc thiếu từ khóa |
+| `using_std_ratio` | modern C++ (ít using std) | Lạm dụng `using namespace std` |
+| `try_catch_ratio` | Xử lý lỗi ngoại lệ tốt | Không catch exception |
+| `raw_pointer_ratio` | Hạn chế con trỏ thô, dùng smart pointer | Lạm dụng con trỏ thô |
+| `getter_setter_ratio` | Đóng gói (encapsulation) chuẩn | Truy cập trực tiếp thuộc tính |
+| `std_prefix_ratio` | Chỉ định namespace rõ ràng (`std::`) | Viết tắt hoặc using bừa bãi |
+| `cpp_cast_ratio` | Sử dụng cast an toàn C++ | Dùng C-style cast `(type)val` |
+
 ---
 
 ## 8. Hybrid Score Computation
@@ -350,7 +392,7 @@ hybrid_score = 0.6 * dl_score + 0.4 * ml_score  # Trọng số: DL:60%, ML:40%
 
 ```
 BronzeRecord           ← Django → S3 (raw submission)
-SilverMLRecord         ← 32 features → S3/LightGBM training
+SilverMLRecord         ← 44 features → S3/LightGBM training
 SilverDLRecord         ← 512 token IDs → S3/RoBERTa training
 ChunkResult            ← Shared: FastAPI ↔ Django ↔ Celery
 GoldPredictionRecord   ← FastAPI → PostgreSQL (full result)
@@ -412,7 +454,7 @@ Khi Django gọi FastAPI để phân tích, kết quả được stream về the
 | `RoBERTaEngine` | `engine/roberta_engine.py` | HTTP client → Colab/GPU |
 | `LLMHandler` | `engine/llm_handler.py` | vLLM → Gemini → OpenAI |
 | `FingerprintEngine` | `engine/fingerprint_engine.py` | LightGBM + SHAP (local) |
-| `CppFeatureExtractorV8` | `engine/feature_extractor/extractor.py` | 32 features từ regex+lizard |
+| `CppFeatureExtractorV8` | `engine/feature_extractor/extractor.py` | 44 features từ regex+lizard |
 | `ExpertExplainer` | `engine/explainer.py` | LIG attribution (on GPU server) |
 | `heuristic_classify` | `engine/heuristic_classifier.py` | Fallback OOP/NORMAL |
 | `ModelManager` | `engine/model_manager.py` | Proxy status to Colab |
@@ -430,3 +472,4 @@ Khi Django gọi FastAPI để phân tích, kết quả được stream về the
 | **Bước 3** | Admin Dashboard: 6 views, metrics API, infra healthcheck | 🔲 Chờ review |
 | **Bước 4** | Shared infrastructure: Logger, Config, Data Contracts, S3, Celery | 🔲 |
 | **Bước 5** | Vận hành: khởi động, debugging, monitoring, CI/CD | 🔲 |
+

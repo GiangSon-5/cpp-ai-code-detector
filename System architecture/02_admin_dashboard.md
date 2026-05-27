@@ -100,7 +100,7 @@ class BronzeSubmission(models.Model):
 ```
 
 > **`result_json`** là field quan trọng nhất: lưu toàn bộ `AnalyzeResponse` từ FastAPI,  
-> bao gồm: `dl_score`, `ml_score`, `hybrid_score`, `perplexity`, `chunks`, `fingerprint`, v.v.
+> bao gồm: `dl_score`, `ml_score`, `hybrid_score`, `perplexity`, `ml_dl_conflict`, `ml_dl_gap`, `fusion_applied`, `chunks`, `fingerprint`, v.v.
 
 ---
 

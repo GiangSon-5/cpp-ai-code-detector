@@ -55,9 +55,9 @@ Do mô hình AI (RoBERTa Ensemble + Qwen 7B) yêu cầu **14–16GB VRAM**, hệ
 | **Web & Admin** | Django | 5.x | CRUD chuẩn ACID, Admin UI tự động, Session/Auth sẵn có |
 | **AI Serving** | FastAPI + Pydantic v2 | Async | Non-blocking I/O cho inference nặng, validation tự động |
 | **AI Runtime** | ONNX Runtime + PyTorch | — | ONNX cho production (2-5x faster), PyTorch cho dev/train |
-| **LLM / Router** | LangGraph + Qwen 2.5 Coder 7B | — | Agentic workflow 4-node |
+| **LLM / Router** | LangGraph + Qwen 2.5 Coder 7B | — | Agentic workflow 5-stage (Router → Analyzer → Fingerprint → Judge → Critique) |
 | **DL Model** | RoBERTa / GraphCodeBERT | Ensemble K-Fold | Phát hiện pattern AI trên token sequence |
-| **ML Model** | LightGBM | — | 32 static features, nhanh, interpretable |
+| **ML Model** | LightGBM | — | 44 static features, nhanh, interpretable |
 | **XAI** | SHAP + Layer Integrated Gradients (LIG) | — | Giải thích feature/token ảnh hưởng đến dự đoán |
 | **Database** | PostgreSQL 16 | Port 5432 | ACID, JSON field cho Gold layer |
 | **Broker** | Redis | Port 6379 | Celery broker + result backend (đang dùng) |
@@ -96,11 +96,11 @@ LVTN-main/
 │   │   │   ├── health.py             # GET /health — runtime stats
 │   │   │   └── predict.py            # POST /api/analyze_stream — SSE inference
 │   │   ├── services/
-│   │   │   └── agent_service.py      # ← LangGraph 4-node pipeline (QUAN TRỌNG)
+│   │   │   └── agent_service.py      # ← LangGraph 5-stage pipeline (QUAN TRỌNG)
 │   │   ├── engine/
 │   │   │   ├── roberta_engine.py     # RoBERTa Ensemble + LIG
 │   │   │   ├── llm_handler.py        # Qwen 2.5 Coder (classify + perplexity + critique)
-│   │   │   ├── fingerprint_engine.py # LightGBM + SHAP (32 features)
+│   │   │   ├── fingerprint_engine.py # LightGBM + SHAP (44 features)
 │   │   │   ├── heuristic_classifier.py # Fallback OOP/NORMAL detection
 │   │   │   ├── explainer.py          # LIG attribution logic
 │   │   │   └── model_manager.py      # Load/cache model weights
@@ -196,10 +196,11 @@ class BronzeSubmission(models.Model):
 
 **Lưu ở:** DagsHub S3 (`.parquet`), managed by DVC
 
-- **Silver-ML**: 32 features tĩnh từ `CppFeatureExtractorV8` (dùng cho LightGBM)
+- **Silver-ML**: 44 features tĩnh từ `CppFeatureExtractorV8` (dùng cho LightGBM)
   - Style features: `avg_line_length`, `brace_style_consistency`, ...
   - Complexity: `avg_cyclomatic_complexity`, `halstead_volume`, ...
   - Entropy: `shannon_entropy`, `bigram_entropy`, `whitespace_entropy`
+  - OOP & Advanced style features (mới): `class_count`, `struct_count`, `has_inheritance`, `access_specifier_ratio`, `virtual_override_ratio`, `using_std_ratio`, `try_catch_ratio`, `raw_pointer_ratio`, `getter_setter_ratio`, `std_prefix_ratio`, `cpp_cast_ratio`
 - **Silver-DL**: 512 token IDs (GraphCodeBERT tokenizer) + attention mask (dùng cho RoBERTa)
 
 ### 🥇 Gold — Kết quả dự đoán
@@ -215,6 +216,9 @@ class GoldPrediction(Base):
     confidence      # final_score (0-1)
     perplexity, max_ppl, burstiness   # Từ Qwen LLM
     is_ambiguous, retry_count
+    ml_dl_conflict  # boolean: True nếu có mâu thuẫn lớn (gap >= 0.40) và nhãn đối lập giữa DL và ML
+    ml_dl_gap       # float: Khoảng cách trị tuyệt đối giữa DL score và ML score
+    fusion_applied  # boolean: True nếu đã can thiệp Controlled Adaptive Fusion
     global_critique                   # LLM Map-Reduce summary
     top_ai_signals, top_hu_signals    # JSON lists
     chunk_details                     # JSON breakdown per chunk
@@ -239,6 +243,10 @@ class GoldPrediction(Base):
 - FastAPI dùng Server-Sent Events (SSE) để stream progress realtime về Django
 - Progress: 5% → 20% → 65% → 75% → 95% → 100%
 
+### ✅ Controlled Adaptive Fusion (Hợp nhất thích ứng có kiểm soát)
+- Khi DL và ML có xung đột nghiêm trọng (`|DL - ML| >= 0.40` và dự đoán nhãn đối lập) và DL nằm trong vùng không tự tin cao (`0.45 <= DL <= 0.75`), hệ thống tự động điều chỉnh điểm số: `final_score = 0.70 * DL + 0.30 * ML`.
+- Cơ chế này cho phép ML hiệu chỉnh kết quả DL ở biên phân loại để sửa sai, trong khi vẫn bảo vệ sự tự tin cao của DL (tránh bị ML kéo sai khi DL đạt tự tin tuyệt đối).
+
 ---
 
 ## 8. Output JSON Schema (từ API)
@@ -255,6 +263,9 @@ class GoldPrediction(Base):
   "max_ppl": 15.42,
   "burstiness": 3.85,
   "is_ambiguous": false,
+  "ml_dl_conflict": false,
+  "ml_dl_gap": 0.19,
+  "fusion_applied": false,
   "total_tokens": 1024,
   "total_chunks": 2,
   "global_critique": "The code exhibits consistent AI-generated patterns...",
@@ -280,7 +291,7 @@ class GoldPrediction(Base):
 | Bước | Nội dung | Trạng thái |
 |------|----------|------------|
 | **Bước 1** | Tổng quan hệ thống, Tech Stack, Medallion Architecture | ✅ Hoàn thành |
-| **Bước 2** | MLOps Pipeline chi tiết: LangGraph 4-node, RoBERTa, LightGBM, XAI | 🔲 Chờ review |
+| **Bước 2** | MLOps Pipeline chi tiết: LangGraph 5-stage, RoBERTa, LightGBM, XAI | 🔲 Chờ review |
 | **Bước 3** | Admin Dashboard: 6 views, metrics API, infra healthcheck | 🔲 Chờ review |
 | **Bước 4** | Shared infrastructure: Logger, Config, Data Contracts, S3, Celery | 🔲 Chờ review |
 | **Bước 5** | Vận hành: khởi động, debugging, monitoring, CI/CD | 🔲 Chờ review |

@@ -73,7 +73,7 @@ _rotate_logs()
 # ==================================================================================
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 _gpu_name = torch.cuda.get_device_name(0) if DEVICE.type == "cuda" else "CPU only"
-print(f"🖥️  [LOCAL GPU] Device: {DEVICE} ({_gpu_name})")
+print(f" [LOCAL GPU] Device: {DEVICE} ({_gpu_name})")
 gpu_log("info", "config", "init", f"Device: {DEVICE} ({_gpu_name})")
 
 # ==================================================================================
@@ -118,7 +118,7 @@ FUSION_ALPHA       = 0.48     # Trọng số RoBERTa trong Hybrid Fusion
 MAX_LEN            = 510      # Max token length per chunk (trừ CLS/SEP)
 STRIDE             = 256      # Sliding window stride
 
-# ⚠️ Giảm để fit 4GB VRAM
+#  Giảm để fit 4GB VRAM
 LIG_N_STEPS        = 10       # (Colab = 20) — giảm 50% thời gian + VRAM
 LIG_BATCH_SIZE     = 1        # (Colab = 4)  — tuyệt đối an toàn cho 4GB
 ENGINE_BATCH_SIZE  = 1        # (Colab = 4)  — 1 chunk tại một thời điểm

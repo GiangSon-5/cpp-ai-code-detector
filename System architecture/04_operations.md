@@ -56,8 +56,7 @@ LOCAL_GPU_PORT=8002
 API_KEY=local-gpu-secret-key                  # Phải khớp với LOCAL_GPU_API_KEY
 ```
 
-> **Lưu ý VRAM:** Local GPU Server tự động giới hạn PyTorch ở 4GB:  
-> `torch.cuda.set_per_process_memory_fraction(4.0 / total_vram, 0)`
+
 
 ---
 
@@ -214,15 +213,11 @@ pkill -f "uvicorn src.local_gpu_server.main:app"
 ### Startup Sequence
 
 ```python
-# 1. Giới hạn VRAM 4GB ngay khi import
-if torch.cuda.is_available():
-    fraction = 4.0 / total_vram
-    torch.cuda.set_per_process_memory_fraction(fraction, 0)
 
-# 2. Khởi tạo LocalModelManager (load RoBERTa weights)
+# 1. Khởi tạo LocalModelManager (load RoBERTa weights)
 _manager = LocalModelManager()
 
-# 3. Tạo FastAPI app
+# 2. Tạo FastAPI app
 app = create_app(_manager)
 ```
 
@@ -454,7 +449,7 @@ LVTN-main/
 │   │   │   ├── heuristic_classifier.py ← OOP/Normal regex
 │   │   │   ├── explainer.py         ← LIG attribution (on GPU)
 │   │   │   └── feature_extractor/
-│   │   │       └── extractor.py     ← CppFeatureExtractorV8 (32 features)
+│   │   │       └── extractor.py     ← CppFeatureExtractorV8 (44 features)
 │   │   ├── routers/
 │   │   │   ├── health.py       ← GET /health, GET /
 │   │   │   └── predict.py      ← POST /api/analyze, /api/analyze_stream

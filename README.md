@@ -57,7 +57,7 @@ Hệ thống được thiết kế linh hoạt chạy theo mô hình **Hybrid** 
 | **Web & Admin** | Django 5.x + Django ORM | CRUD chuẩn ACID, MLOps Dashboard (6 views) |
 | **AI Orchestration**| FastAPI (Async) + Pydantic v2 | Điều phối pipeline AI, SSE streaming realtime |
 | **AI Runtime** | ONNX Runtime + PyTorch | ONNX cho production (2-5x faster), PyTorch cho dev |
-| **LLM Router** | LangGraph + Qwen 2.5 Coder 7B | Agentic workflow 4 node: Router → Analyzer → Judge → Critique |
+| **LLM Router** | LangGraph + Qwen 2.5 Coder 7B | Agentic workflow 5-stage: Router → Analyzer → Fingerprint → Judge → Critique |
 | **Database** | PostgreSQL 16 | ACID, JSON field cho Gold layer prediction |
 | **Broker** | Redis & Redpanda | Redis (Celery broker), Redpanda (Event streaming) |
 | **Background Jobs** | Celery | Async ETL (Bronze → Silver), S3 Push |
@@ -70,7 +70,7 @@ Hệ thống được thiết kế linh hoạt chạy theo mô hình **Hybrid** 
 
 Hệ thống áp dụng kiến trúc dữ liệu 3 tầng (Medallion) để xử lý lượng lớn dữ liệu huấn luyện:
 - **🥉 Bronze (DagsHub S3 + PostgreSQL):** Lưu mã nguồn thô (JSONL).
-- **🥈 Silver (DagsHub S3):** Lưu đặc trưng đã trích xuất (32 Features cho ML, 512 Tokens cho DL) dưới dạng `.parquet`.
+- **🥈 Silver (DagsHub S3):** Lưu đặc trưng đã trích xuất (44 Features cho ML, 512 Tokens cho DL) dưới dạng `.parquet`.
 - **🥇 Gold (PostgreSQL):** Lưu kết quả dự đoán cuối cùng (Predictions, XAI Fingerprints) phục vụ Dashboard thống kê.
 
 ---
@@ -201,14 +201,17 @@ LVTN-main/
 │  │   (Local GPU  │  │ │ Extract     │ │    (TTL: 24h)           │
 │  │    hoặc Colab)│  │ │ features →  │ └─────────────────────────┘
 │  │   ↓           │  │ │ Push to     │
-│  │ ③ Judge       │  │ │ DagsHub S3  │
-│  │   (Self-      │  │ │ (Silver)    │
-│  │    Correct)   │  │ │             │
-│  │   ↓           │  │ │ Task 3:     │
-│  │ ④ Critique    │  │ │ Write Gold  │
-│  │   (Map-Reduce │  │ │ prediction  │
-│  │    LLM)       │  │ │ to Postgres │
-│  └───────────────┘  │ └─────────────┘
+│  │ ③ Fingerprint │  │ │ DagsHub S3  │
+│  │   (LightGBM)  │  │ │ (Silver)    │
+│  │   ↓           │  │ │             │
+│  │ ④ Judge       │  │ │ Task 3:     │
+│  │   (Adaptive   │  │ │ Write Gold  │
+│  │    Fusion)    │  │ │ prediction  │
+│  │   ↓           │  │ │ to Postgres │
+│  │ ⑤ Critique    │  │ └─────────────┘
+│  │   (LLM Map-   │  │
+│  │    Reduce)    │  │
+│  └───────────────┘  │
 │                     │
 │  SSE Streaming      │
 │  Response → User    │
@@ -220,7 +223,7 @@ LVTN-main/
 │                                                                         │
 │  🥉 BRONZE (DagsHub S3)          🥈 SILVER (DagsHub S3)                │
 │  ┌─────────────────────┐         ┌─────────────────────────┐           │
-│  │ raw_code.jsonl       │    ──►  │ Silver-ML: 32 features  │           │
+│  │ raw_code.jsonl       │    ──►  │ Silver-ML: 44 features  │           │
 │  │ + metadata           │    ──►  │ Silver-DL: 512 tokens   │           │
 │  │ + code_hash          │         │ (.parquet format)        │           │
 │  └─────────────────────┘         └─────────────────────────┘           │
@@ -336,7 +339,7 @@ Dữ liệu trả về từ API (SSE Streaming) và được lưu vào Gold laye
 
 Vui lòng tham khảo các thư mục và file tài liệu sau để nắm bắt chi tiết:
 1. `System architecture/00_system_overview.md` - Tổng quan kiến trúc Hybrid & Medallion.
-2. `System architecture/01_mlops_pipeline.md` - Chi tiết LangGraph 4-node và các model (RoBERTa, Qwen, LightGBM).
+2. `System architecture/01_mlops_pipeline.md` - Chi tiết LangGraph 5-node và các model (RoBERTa, Qwen, LightGBM).
 3. `System architecture/02_admin_dashboard.md` - Hệ thống Dashboard (Metrics, Infra, VRAM Monitoring).
 4. `System architecture/03_shared_infrastructure.md` - Core Utils (Logger, DB Session, Config, Broker).
 5. `System architecture/04_operations.md` - Vận hành, Debugging và Deployment.

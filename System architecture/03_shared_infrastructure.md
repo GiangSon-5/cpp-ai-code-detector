@@ -269,7 +269,7 @@ data-lake/
 | Hàm | Mô tả | Trả về |
 |-----|-------|-------|
 | `upload_bronze_jsonl(code_hash, record)` | Upload Bronze record dạng JSONL | S3 key string |
-| `upload_silver_ml_parquet(code_hash, df)` | Upload DataFrame 32 features | S3 key string |
+| `upload_silver_ml_parquet(code_hash, df)` | Upload DataFrame 44 features | S3 key string |
 | `upload_silver_dl_parquet(code_hash, df)` | Upload DataFrame token IDs | S3 key string |
 | `upload_gold_parquet(code_hash, df)` | Upload GoldPrediction record | S3 key string |
 | `download_parquet(prefix, code_hash)` | Download và parse Parquet → DataFrame | `pd.DataFrame` |
@@ -357,7 +357,7 @@ Retry:   3 lần, delay 10s
 ```
 Trigger: Sau Bronze task thành công
 Input:   code_hash, raw_code, label (optional)
-Action:  CppFeatureExtractorV8.extract() → 32 ML features
+Action:  CppFeatureExtractorV8.extract() → 44 ML features (gồm 33 features cơ bản và 11 features OOP/style nâng cao)
          AutoTokenizer(graphcodebert) → 512 DL token IDs
          Upload JSON → silver/{YYYY}/{MM}/{DD}/{code_hash}.json
 Retry:   3 lần, delay 15s
@@ -367,7 +367,7 @@ Note:    DL tokenization là non-fatal — nếu lỗi vẫn tiếp tục với 
 #### Task 3: `log_prediction_to_gold`
 ```
 Trigger: Sau inference hoàn thành (FastAPI gọi .delay())
-Input:   prediction_data dict (match GoldPredictionRecord schema)
+Input:   prediction_data dict (match GoldPredictionRecord schema với ml_dl_conflict, ml_dl_gap, fusion_applied)
 Action:  SyncSession → GoldPrediction ORM object → session.commit()
 DB:      INSERT vào gold_predictions table (PostgreSQL)
 Retry:   3 lần, delay 5s
@@ -409,7 +409,7 @@ sse_proxy_view() → POST /api/analyze_stream (FastAPI)
        │
        ▼
 FastAPI AgentService.analyze_code_stream()
-   [Router → Analyzer → Judge → Critique → Fingerprint]
+   [Router → Analyzer → Fingerprint XAI → Judge → Critique]
        │
        │ On step "complete":
        ├── BronzeRepository.update_result(result_json)           ← Django
@@ -425,7 +425,7 @@ push_bronze_to_s3:
   data_lake/bronze/{date}/{hash}.jsonl  (local + S3)
 
 extract_and_push_silver:
-  32 features + 512 tokens
+  44 features + 512 tokens
   data_lake/silver/{date}/{hash}.json   (local + S3)
 
 log_prediction_to_gold:

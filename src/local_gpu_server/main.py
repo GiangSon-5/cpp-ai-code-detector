@@ -16,13 +16,12 @@ Biến môi trường cần thiết (trong .env hoặc export):
 
 import torch
 
-# --- Limit VRAM to 4GB as requested ---
 if torch.cuda.is_available():
     total_vram = torch.cuda.get_device_properties(0).total_memory / 1024**3
     fraction = 4.0 / total_vram
     if fraction < 1.0:
         torch.cuda.set_per_process_memory_fraction(fraction, 0)
-        print(f"⚠️  [LOCAL GPU] VRAM limited to 4GB (fraction {fraction:.4f})")
+        print(f"  [LOCAL GPU] VRAM 4GB (fraction {fraction:.4f})")
 
 from .engine import LocalModelManager
 from .server import create_app
