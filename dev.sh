@@ -6,7 +6,7 @@
 
 SESSION_NAME="lvtn_dev"
 CONDA_ENV="detection_ai"
-PROJECT_DIR="/home/nguyenvannhi242/LVTN-main"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Kiểm tra nếu đang chạy bên trong một session tmux khác
 if [ -n "$TMUX" ]; then
@@ -30,9 +30,8 @@ run_in_pane() {
     local cmd=$2
     local label=$3
     
-    # Gửi lệnh activate conda và sau đó là lệnh chính
-    # Sử dụng 'conda activate' thay vì 'conda run' để ổn định hơn trong tmux
-    tmux send-keys -t $SESSION_NAME:0.$pane_id "echo '>>> $label' && source ~/anaconda3/etc/profile.d/conda.sh && conda activate $CONDA_ENV && $cmd" C-m
+    # Kích hoạt Conda environment linh hoạt trên nhiều cấu hình máy
+    tmux send-keys -t $SESSION_NAME:0.$pane_id "echo '>>> $label' && (source ~/anaconda3/etc/profile.d/conda.sh 2>/dev/null || source ~/miniconda3/etc/profile.d/conda.sh 2>/dev/null || true) && conda activate $CONDA_ENV 2>/dev/null; $cmd" C-m
 }
 
 # Chia màn hình (Layout 2x2)

@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-httpx
-langgraph
-langchain
-langchain-core
-numpy

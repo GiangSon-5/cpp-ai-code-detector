@@ -1,10 +1,13 @@
-# Python
+# ==============================================================================
+# Git Ignore Rules — C++ AI Code Detector & MLOps Platform
+# ==============================================================================
+
+# Python bytecode & cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -21,24 +24,28 @@ wheels/
 .installed.cfg
 *.egg
 
-# Django
+# Virtual environments
+.env
+.venv
+venv/
+ENV/
+env/
+
+# Django framework
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
 
-# Environment
-.env
-.venv
-venv/
-ENV/
-
-# IDEs
+# IDE & Editor files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# OS
+# Operating System
 .DS_Store
 Thumbs.db
 
@@ -46,19 +53,34 @@ Thumbs.db
 *.log
 logs/
 
-# Data/Models (often large)
+# Model checkpoints & large binary weights (Use DagsHub/S3/DVC)
 *.h5
 *.pth
+*.pt
+*.bin
 *.pkl
+*.onnx
 *.safetensors
 models/
 local_models/
+Saved_Models/
 data/
 datasets/
 
-de_xuat_cai_thien_he_thong.md
+# Data lake local cache (Keep folder structure via .gitkeep)
+data_lake/bronze/*
+!data_lake/bronze/.gitkeep
+data_lake/silver/*
+!data_lake/silver/.gitkeep
+data_lake/gold/*
+!data_lake/gold/.gitkeep
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Document drafts & temporary files
+*.docx
+*.pptx
 rate_limits_by_model.json
 test_gemini/
 behavioral_insights_rewrite.txt
-
-tests/
