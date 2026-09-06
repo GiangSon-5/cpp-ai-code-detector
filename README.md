@@ -281,4 +281,4 @@ pytest tests/django_web/
 ---
 
 ## 📜 Giấy Phép (License)
-Dự án được phát triển phục vụ đề tài Luận Văn Tốt Nghiệp (LVTN). Mã nguồn được chia sẻ vì mục đích học thuật và nghiên cứu.
+Dự án được phát hành theo giấy phép **MIT License**. Mã nguồn được chia sẻ tự do cho cộng đồng nhằm phục vụ mục đích học thuật, nghiên cứu và phát triển các hệ thống an toàn thông tin / AI Detection.

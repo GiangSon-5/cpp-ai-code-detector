@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # =================================================================
-# LVTN AUTOMATION SCRIPT (Improved)
+# CPP AI DETECTOR AUTOMATION SCRIPT
 # =================================================================
 
-SESSION_NAME="lvtn_dev"
+SESSION_NAME="cpp_detector_dev"
 CONDA_ENV="detection_ai"
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
