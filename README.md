@@ -109,6 +109,73 @@ graph TD
 
 ---
 
+## 📊 Dữ Liệu & Quy Trình Thu Thập (Dataset & Anti-Leakage)
+
+Hệ thống được xây dựng trên bộ dữ liệu chuẩn hóa gồm hàng nghìn tệp mã nguồn C++ được gán nhãn cân bằng:
+
+### 1. Nguồn Dữ Liệu
+* **Mã nguồn do Con người viết (Human-Written Code):** Thu thập từ các bài toán lập trình thuật toán, cấu trúc dữ liệu và các kho lưu trữ dự án C++ thực tế trên GitHub / nền tảng lập trình mã nguồn mở, chia thành hơn **420+ nhóm dự án/tác giả độc lập (`project_groups`)**.
+* **Mã nguồn do AI sinh ra (AI-Generated Code):** Sinh tự động thông qua prompt từ **10 mô hình ngôn ngữ lớn (LLMs)** hàng đầu hiện nay (GPT-4, GPT-3.5, Gemini, Claude, LLaMA, DeepSeek, Qwen...) dựa trên các đề bài lập trình tương ứng để đảm bảo tính tương đồng về bài toán và độ phức tạp.
+* **Phân tách 2 miền bài toán:**
+  * **C++ Normal:** Thuật toán mảng, chuỗi, đồ thị, quy hoạch động, cấu trúc dữ liệu cơ bản.
+  * **C++ OOP:** Lập trình hướng đối tượng chứa khai báo `class`, kế thừa (`inheritance`), tính đa hình (`virtual/override`), nạp chồng toán tử (`operator overloading`), mẫu hàm (`templates`).
+
+### 2. Kỹ Thuật Chống Rò Rỉ Dữ Liệu (Anti-Data Leakage)
+* **Xóa bỏ Metadata Headers:** Tự động phát hiện và loại bỏ toàn bộ các khối comment đầu file do AI tự chèn (như `// DATASET`, `// MODEL`, `// GEMINI`, `// GPT`, `// CATEGORY`), ngăn chặn mô hình "học vẹt" từ khóa định danh thay vì học ngữ nghĩa code.
+* **Stratified Group K-Fold (10-Fold):** Nhóm các file thuộc cùng một tác giả/repo (`user_repo`). Toàn bộ mã nguồn trong cùng một nhóm chỉ xuất hiện ở tập Train hoặc tập Test, triệt tiêu hoàn toàn rò rỉ dữ liệu giữa các tập.
+
+---
+
+## 🧠 Huấn Luyện Mô Hình & Trích Xuất Đặc Trưng (Finetuning & Feature Engineering)
+
+Hệ thống kết hợp cả Deep Learning hiện đại và Machine Learning truyền thống để đạt độ tin cậy cao nhất:
+
+### 1. Fine-tuning Deep Learning (GraphCodeBERT / RoBERTa)
+* **Mô hình nền tảng:** Sử dụng `microsoft/graphcodebert-base` (chuyên sâu về cấu trúc luồng dữ liệu của code) và `roberta-base`.
+* **Kỹ thuật Cửa sổ trượt (Sliding Window):** Để giải quyết giới hạn 512 token của Transformer đối với các file C++ dài, áp dụng Sliding Window với `max_len=510`, bước nhảy `stride=256`. Nhờ đó, các đoạn code dài được chia thành các chunk gối đầu nhau, không làm gián đoạn ngữ cảnh.
+* **Huấn luyện theo nhánh:** Huấn luyện 10-Fold Cross Validation riêng biệt cho 2 nhánh:
+  * Checkpoint **`fold_1_basic`**: Tối ưu nhận diện C++ thuật toán/cơ bản.
+  * Checkpoint **`fold_1_oop`**: Tối ưu nhận diện C++ hướng đối tượng.
+
+### 2. Trích Xuất 44 Đặc Trưng Machine Learning (Feature Engineering)
+Bộ trích xuất `CppFeatureExtractorV8` thu thập **44 đặc trưng tĩnh** phản ánh phong cách lập trình:
+* **Layout & Bố cục:** `comment_ratio`, `empty_line_ratio`, `avg_line_length`, `max_line_length`, `tab_vs_space_ratio`, `brace_style_consistency` (tỷ lệ Allman vs K&R).
+* **Quy ước Đặt tên:** `avg_identifier_length`, `identifier_length_variance`, `single_char_var_ratio`, `unique_identifier_ratio`, `keyword_to_identifier_ratio`.
+* **Độ phức tạp Cấu trúc:** Cyclomatic Complexity (`lizard`), Halstead Metrics (Volume, Difficulty, Effort, Bugs), Maintainability Index (MI), `max_nesting_depth`, `code_to_comment_ratio`.
+* **Thói quen Lập trình & C++ Hiện đại:** `total_includes`, `has_bits_stdc`, `macro_count`, `modern_cpp_ratio` (`auto`, `constexpr`, `nullptr`, smart pointers), `const_usage_ratio`, `has_fast_io` (`cin.tie`, `sync_with_stdio`), `newline_style_ratio` (`\n` vs `endl`).
+* **Lý thuyết Thông tin (Entropy):** Shannon Entropy của mã nguồn, Bigram Entropy, Whitespace pattern entropy.
+
+### 3. Quy Trình Lọc Đặc Trưng 3 Tầng Nghiêm Ngặt (3-Stage Feature Selection)
+Để tránh Overfitting và tối ưu hóa tốc độ xử lý:
+1. **Tầng 1 — Correlation Filter:** Loại bỏ các đặc trưng đa cộng tuyến có hệ số tương quan $|r| > 0.85$.
+2. **Tầng 2 — Select K-Best (Mutual Information):** Giữ lại các đặc trưng có lượng thông tin tương hỗ cao nhất đối với nhãn Human/AI.
+3. **Tầng 3 — Lasso L1 Regularization:** Áp dụng hồi quy L1 phạt trọng số để triệt tiêu các đặc trưng dư thừa/nhiễu.
+* **Model Machine Learning:** Thử nghiệm giữa XGBoost, Random Forest và LightGBM ➔ **LightGBM** đạt độ chính xác cao nhất, khả năng kháng overfit tốt nhất và tốc độ tính toán chỉ mất vài mili-giây.
+
+---
+
+## 📈 Kết Quả Thực Nghiệm & So Sánh (Benchmark & Evaluation)
+
+### 1. Bảng So Sánh Hiệu Năng Chi Tiết (Trên tập Test kín 1,256 mẫu)
+
+| Mô hình | Precision (Human / AI) | Recall (Human / AI) | F1-Score (Macro) | Accuracy |
+|---|:---:|:---:|:---:|:---:|
+| **GraphCodeBERT** (Deep Learning đơn lẻ) | 0.8821 / 0.9369 | 0.9411 / 0.8742 | 0.9075 | **90.76%** |
+| **LightGBM** (Machine Learning 44 Features) | 0.9618 / 0.9633 | 0.9634 / 0.9618 | 0.9626 | **96.26%** |
+| **🏆 Hybrid Fusion Model** ($\alpha = 0.48$) | **0.9856 / 0.9858** | **0.9858 / 0.9856** | **0.9857** | **98.57%** |
+
+### 2. Ưu Thế Vượt Trội Của Kiến Trúc Hybrid Fusion
+* **Tối ưu hóa trọng số $\alpha$ qua Grid Search:**
+  $$\text{Final\_Score} = 0.48 \cdot \text{Score}_{DL} + 0.52 \cdot \text{Score}_{ML}$$
+* **Bù trừ khuyết điểm:** 
+  * Deep Learning rất mạnh ở việc bắt các chuỗi token ngữ nghĩa tinh vi nhưng có thể phân vân ở các bài code quá ngắn hoặc biến thể cú pháp lạ.
+  * Machine Learning với 44 đặc trưng nắm bắt hoàn hảo thói quen viết code, thụt lề, đặt tên biến và độ phức tạp Halstead.
+  * Việc hợp nhất giúp đẩy Accuracy từ **90.76% (DL)** và **96.26% (ML)** lên mức **98.57% (Hybrid)**.
+* **Đánh giá trên tập dữ liệu ngoại vi (Out-of-Distribution - OOD):**
+  * Thử nghiệm trên 4,000 mẫu sinh từ các model AI mới chưa từng xuất hiện trong tập train vẫn đạt tỷ lệ phát hiện chính xác trên **95.8% – 96.5%**, chứng minh mô hình có tính tổng quát hóa cao và không bị học vẹt.
+
+---
+
 ## 💻 Tech Stack
 
 | Thành phần | Công nghệ | Vai trò & Mục đích |
